@@ -1,0 +1,1315 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Country Information System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: top bar with module tabs; Peta = registry panel + full-bleed vector world map; Sensor/Laporan/Perawatan = full-width work lists; a detail drawer slides over the right edge in every module. */
+:root{
+  --ground:#f4f6f5; --panel:#ffffff; --ink:#1b2a30; --muted:#5d6e74; --line:#dde4e3;
+  --accent:#0f6d6a; --accent-ink:#ffffff; --accent-soft:#e1efed;
+  --sea:#d6e3e6; --land:#eef1ec; --coast:#aebcbd; --grat:#c3d3d6;
+  --tint1:#d9e9e2; --tint2:#bfdccf; --tint3:#9ccab7; --tint4:#76b49c;
+  --c-bangunan:#3d5a98; --c-jalan:#c7831a; --c-jembatan:#0f8a84; --c-bendungan:#2b7fc2;
+  --c-pelabuhan:#6b4fa3; --c-bandara:#a2459a; --c-energi:#cf4b2b; --c-lainnya:#6b7a80;
+  --ok:#2e7d4f; --warn:#b7791f; --bad:#c0392b; --build:#4a6fa5; --crit:#8e1b3b;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --shadow:0 10px 30px rgba(20,40,45,.16);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --ground:#0f1719; --panel:#152024; --ink:#e3ecec; --muted:#93a6aa; --line:#27363a;
+  --accent:#4fbdb3; --accent-ink:#0b1a1a; --accent-soft:#1b3433;
+  --sea:#0c1a20; --land:#1e2c2f; --coast:#3b5055; --grat:#16272d;
+  --tint1:#1f3935; --tint2:#24493f; --tint3:#2b5d4d; --tint4:#357560;
+  --c-bangunan:#7d9be0; --c-jalan:#e9a843; --c-jembatan:#3cc3b9; --c-bendungan:#5aaeee;
+  --c-pelabuhan:#a78bdf; --c-bandara:#dc7fd2; --c-energi:#f07a5a; --c-lainnya:#9aa9ae;
+  --ok:#5cc28a; --warn:#e3a849; --bad:#ef6b5d; --build:#86a8de; --crit:#ff7fa3;
+  --shadow:0 10px 30px rgba(0,0,0,.45); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --ground:#0f1719; --panel:#152024; --ink:#e3ecec; --muted:#93a6aa; --line:#27363a;
+  --accent:#4fbdb3; --accent-ink:#0b1a1a; --accent-soft:#1b3433;
+  --sea:#0c1a20; --land:#1e2c2f; --coast:#3b5055; --grat:#16272d;
+  --tint1:#1f3935; --tint2:#24493f; --tint3:#2b5d4d; --tint4:#357560;
+  --c-bangunan:#7d9be0; --c-jalan:#e9a843; --c-jembatan:#3cc3b9; --c-bendungan:#5aaeee;
+  --c-pelabuhan:#a78bdf; --c-bandara:#dc7fd2; --c-energi:#f07a5a; --c-lainnya:#9aa9ae;
+  --ok:#5cc28a; --warn:#e3a849; --bad:#ef6b5d; --build:#86a8de; --crit:#ff7fa3;
+  --shadow:0 10px 30px rgba(0,0,0,.45); color-scheme:dark}
+
+html,body{height:100%}
+body{background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+*{box-sizing:border-box}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grow{flex:1}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+.app{height:100%;display:grid;grid-template-columns:minmax(320px,390px) 1fr;grid-template-rows:auto 1fr}
+.app.full{grid-template-columns:1fr}
+.app.full .side{display:none}
+.bar{grid-column:1/-1;display:flex;align-items:center;gap:10px 16px;padding-block:8px;padding-inline:16px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+.brand h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:24px;letter-spacing:.01em;line-height:1}
+.brand .code{font-family:var(--f-mono);font-size:11px;color:var(--accent);border:1px solid currentColor;border-radius:3px;padding:1px 5px;letter-spacing:.06em}
+.nav{display:flex;gap:2px;overflow-x:auto;max-width:100%}
+.nav button{border:0;background:transparent;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:600;color:var(--muted);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.nav button:hover{color:var(--ink);background:var(--ground)}
+.nav button[aria-selected="true"]{color:var(--ink);background:var(--accent-soft)}
+.badge{font-family:var(--f-mono);font-size:10.5px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;display:inline-grid;place-items:center;background:var(--line);color:var(--ink)}
+.badge.hot{background:var(--bad);color:#fff}
+.role{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:3px 7px;white-space:nowrap}
+.role.admin{color:var(--accent);border-color:var(--accent)}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:7px 12px;cursor:pointer;font-weight:600;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.sm{padding:4px 9px;font-size:12px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.danger{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 45%,transparent)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.linkbtn{border:0;background:none;padding:0;color:var(--accent);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+
+.side{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;min-width:0}
+.side-scroll{overflow:auto;min-height:0;flex:1;display:flex;flex-direction:column}
+.sect{padding-block:14px;padding-inline:16px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0}
+.totals{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.big{font-family:var(--f-display);font-weight:600;font-size:40px;line-height:.9;font-variant-numeric:tabular-nums}
+.totals .sub{color:var(--muted);font-size:12.5px}
+.health{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.hbtn{border:1px solid var(--line);background:var(--ground);border-radius:8px;padding:8px 10px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-width:0}
+.hbtn:hover{border-color:var(--muted)}
+.hbtn b{font-family:var(--f-display);font-size:24px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.hbtn span{font-size:11.5px;color:var(--muted);line-height:1.2}
+.hbtn.hot{border-color:color-mix(in srgb,var(--bad) 50%,transparent)}
+.hbtn.hot b{color:var(--bad)}
+.cond-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--line)}
+.cond-bar span{display:block;height:100%}
+.cond-legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted)}
+.cond-legend b{color:var(--ink);font-variant-numeric:tabular-nums;font-weight:600}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:0;flex:none}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:transparent;border-radius:999px;padding:4px 10px 4px 9px;font-size:12.5px;cursor:pointer}
+.chip .n{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+.chip.dim{opacity:.55}
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.filters .full{grid-column:1/-1}
+.in{width:100%;border:1px solid var(--line);background:var(--ground);border-radius:6px;padding:7px 10px;min-width:0}
+.in:focus{border-color:var(--accent);outline:none}
+.list{list-style:none;margin:0;padding:0}
+.row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;padding-block:10px;padding-inline:16px;border-bottom:1px solid var(--line);cursor:pointer}
+.row:hover{background:var(--ground)}
+.row[aria-current="true"]{background:var(--accent-soft)}
+.glyph{width:28px;height:28px;border-radius:6px;display:grid;place-items:center;color:#fff;margin-top:1px;flex:none}
+.glyph svg{width:16px;height:16px}
+.nm{font-weight:600;line-height:1.3;min-width:0;overflow-wrap:anywhere}
+.meta{color:var(--muted);font-size:12px;margin-top:2px}
+.coord{font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-top:3px}
+.flag{color:var(--bad);font-size:11.5px;font-weight:600;margin-top:3px}
+.pill{font-size:11px;font-weight:600;border-radius:4px;padding:2px 7px;white-space:nowrap;border:1px solid currentColor;display:inline-block}
+.c-ok,.pill.baik,.pill.selesai{color:var(--ok)}
+.c-warn,.pill.ringan,.pill.ditangani,.pill.sedang{color:var(--warn)}
+.c-bad,.pill.berat,.pill.tinggi,.pill.alert{color:var(--bad)}
+.pill.kritis{color:var(--crit)}
+.pill.bangun,.pill.baru,.pill.terjadwal{color:var(--build)}
+.pill.rendah,.pill.off,.pill.offline,.pill.nodata{color:var(--muted)}
+.pill.solid.kritis{background:var(--crit);border-color:var(--crit);color:#fff}
+.tag-ex{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border:1px dashed var(--muted);border-radius:3px;padding:0 4px;margin-left:6px;vertical-align:1px;white-space:nowrap}
+.empty{padding:28px 16px;color:var(--muted);display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.empty h3{margin:0;color:var(--ink);font-family:var(--f-display);font-size:20px;font-weight:600}
+.empty p{margin:0;max-width:40ch}
+.banner{position:absolute;top:12px;left:60px;right:12px;z-index:1150;background:var(--panel);border:1px solid var(--warn);border-left-width:4px;border-radius:8px;padding:10px 12px;font-size:13px;box-shadow:var(--shadow);max-width:560px}
+.notice{margin:0;padding-block:8px;padding-inline:16px;font-size:12.5px;background:var(--accent-soft);color:var(--ink);border-bottom:1px solid var(--line)}
+
+.main{position:relative;min-height:0;min-width:0}
+#map{position:absolute;inset:0}
+.legend{position:absolute;left:12px;bottom:12px;z-index:900;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:11.5px;display:grid;grid-template-columns:repeat(2,auto);gap:3px 14px;box-shadow:var(--shadow)}
+.legend .al{grid-column:1/-1;border-top:1px solid var(--line);padding-top:4px;margin-top:2px;display:flex;align-items:center;gap:6px}
+.ringdot{width:12px;height:12px;border-radius:50%;border:2px solid var(--bad);display:inline-block}
+.pickhint{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:950;background:var(--ink);color:var(--panel);padding:7px 14px;border-radius:999px;font-size:13px;font-weight:600;box-shadow:var(--shadow);white-space:nowrap}
+.cursor{position:absolute;right:12px;bottom:12px;z-index:900;font-family:var(--f-mono);font-size:11px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 8px;color:var(--muted)}
+
+.pane{position:absolute;inset:0;z-index:1100;background:var(--ground);overflow:auto}
+.pane-in{max-width:1080px;margin:0 auto;padding-block:20px 40px;padding-inline:16px;display:flex;flex-direction:column;gap:14px}
+.pane-h{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.pane-h h2{margin:0;font-family:var(--f-display);font-weight:700;font-size:32px;line-height:1}
+.pane-h p{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.tlist{list-style:none;margin:0;padding:0}
+.trow{display:grid;grid-template-columns:4px 1fr auto;gap:12px;align-items:center;padding-block:11px;padding-inline:0 14px;border-bottom:1px solid var(--line);cursor:pointer;background:var(--panel)}
+.trow:last-child{border-bottom:0}
+.trow:hover{background:var(--ground)}
+.trow .stripe{align-self:stretch;margin-block:-11px;background:var(--line)}
+.trow .stripe.rendah{background:var(--muted)} .trow .stripe.sedang{background:var(--warn)} .trow .stripe.tinggi{background:var(--bad)} .trow .stripe.kritis{background:var(--crit)}
+.trow .stripe.late{background:var(--bad)} .trow .stripe.plan{background:var(--build)} .trow .stripe.done{background:var(--ok)}
+.trow .right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right}
+.trow .when{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.sec-title{margin:8px 0 0;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;gap:8px;align-items:center}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+
+.scard{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.scard.alert{border-color:color-mix(in srgb,var(--bad) 55%,transparent)}
+.scard .top{display:flex;gap:8px;align-items:flex-start}
+.scard .ttl{flex:1;min-width:0}
+.scard .ttl b{display:block;overflow-wrap:anywhere;line-height:1.25}
+.scard .ttl small{color:var(--muted);font-size:11.5px}
+.reading{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.reading .v{font-family:var(--f-display);font-size:34px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.reading .u{color:var(--muted);font-weight:600}
+.reading .t{color:var(--muted);font-size:11.5px;margin-left:auto}
+.thr{font-size:11.5px;color:var(--muted)}
+.spark{display:block;width:100%;height:56px}
+.spark .band{fill:var(--accent-soft)}
+.spark .ln{fill:none;stroke:var(--accent);stroke-width:1.8;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+.spark .end{stroke:var(--accent);stroke-width:8;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.spark .end.al{stroke:var(--bad)}
+.spark-cap{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:10.5px;color:var(--muted);gap:8px}
+.spark-empty{font-size:12px;color:var(--muted);padding:8px 0}
+.cam{border-radius:6px;background:var(--ground);border:1px dashed var(--line);padding:12px;display:flex;flex-direction:column;gap:6px;font-size:12.5px}
+.cam .url{font-family:var(--f-mono);font-size:11px;overflow-wrap:anywhere;color:var(--muted)}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+
+.drawer{position:absolute;top:12px;right:12px;bottom:12px;width:min(420px,calc(100% - 24px));z-index:1200;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);display:flex;flex-direction:column;min-height:0}
+.drawer-h{display:flex;align-items:flex-start;gap:8px;padding:14px 14px 10px 16px;border-bottom:1px solid var(--line)}
+.hwrap{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.drawer-h h2{margin:0;font-family:var(--f-display);font-weight:600;font-size:24px;line-height:1.05;text-wrap:balance;overflow-wrap:anywhere}
+.x{border:0;background:transparent;cursor:pointer;padding:4px 6px;border-radius:4px;color:var(--muted);font-size:20px;line-height:1}
+.x:hover{background:var(--ground);color:var(--ink)}
+.tabs{display:flex;gap:2px;padding:0 10px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs button{border:0;background:none;padding:9px 8px;cursor:pointer;font-weight:600;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;display:inline-flex;gap:5px;align-items:center}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.drawer-b{overflow:auto;padding:14px 16px;display:flex;flex-direction:column;gap:14px;min-height:0;flex:1}
+.drawer-f{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:7px 12px;margin:0}
+.kv dt{color:var(--muted);font-size:12.5px}
+.kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.coordbox{font-family:var(--f-mono);font-size:12px;background:var(--ground);border:1px solid var(--line);border-radius:6px;padding:8px 10px;display:grid;gap:2px}
+.catline{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;flex-wrap:wrap}
+.minis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mini{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--ground)}
+.mini b{display:block;font-family:var(--f-display);font-size:22px;font-weight:600;line-height:1}
+.mini span{font-size:11.5px;color:var(--muted)}
+.mini.hot b{color:var(--bad)}
+.stack{display:flex;flex-direction:column;gap:10px}
+.item{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:5px;background:var(--panel)}
+.item.click{cursor:pointer}
+.item.click:hover{border-color:var(--muted)}
+.item .l1{display:flex;gap:8px;align-items:flex-start}
+.item .l1 b{flex:1;min-width:0;overflow-wrap:anywhere;line-height:1.3}
+.item .sub{font-size:12px;color:var(--muted)}
+.item p{margin:0;font-size:13px;overflow-wrap:anywhere}
+.timeline{list-style:none;margin:0;padding:0 0 0 14px;border-left:2px solid var(--line);display:flex;flex-direction:column;gap:12px}
+.timeline li{position:relative}
+.timeline li::before{content:"";position:absolute;left:-20px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--panel);border:2px solid var(--accent)}
+.timeline .sub{font-size:12px;color:var(--muted)}
+.timeline p{margin:3px 0 0;overflow-wrap:anywhere}
+form.fm{display:flex;flex-direction:column;gap:11px}
+.fld{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fld label,.fld .lbl{font-size:12px;font-weight:600;color:var(--muted)}
+.help{font-size:11.5px;color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.err{color:var(--bad);font-size:12.5px;margin:0}
+.pj-res{display:flex;flex-direction:column;gap:2px;margin-top:4px}
+.pj-res button{text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:6px 10px;cursor:pointer}
+.pj-res button:hover{border-color:var(--accent)}
+.confirm{background:color-mix(in srgb,var(--bad) 10%,var(--panel));border:1px solid color-mix(in srgb,var(--bad) 40%,transparent);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;font-size:13px}
+.box{background:var(--ground);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.viewer{position:fixed;inset:0;z-index:2000;background:var(--ground);display:grid;grid-template-rows:auto minmax(0,1fr);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.viewer-h{display:flex;align-items:center;gap:10px;padding-block:10px;padding-inline:16px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.viewer-h .hwrap{flex:1}
+.viewer-h h2{margin:0;font-family:var(--f-display);font-size:22px;font-weight:600;line-height:1.1;overflow-wrap:anywhere}
+.viewer-b{display:grid;grid-template-columns:minmax(0,1fr) 320px;min-height:0}
+.stage{position:relative;min-width:0;min-height:0;background:var(--sea);overflow:hidden;touch-action:none}
+.stage canvas{display:block;position:absolute;inset:0;width:100%!important;height:100%!important}
+.vstatus{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:var(--muted);z-index:2}
+.vstatus div{max-width:46ch;display:flex;flex-direction:column;gap:8px;align-items:center}
+.vstatus b{color:var(--ink);font-family:var(--f-display);font-size:20px;font-weight:600}
+.vhint{position:absolute;left:12px;bottom:12px;z-index:2;font-size:11.5px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 8px}
+.vside{background:var(--panel);border-left:1px solid var(--line);overflow:auto;padding-block:14px;padding-inline:16px;display:flex;flex-direction:column;gap:16px;min-width:0;min-height:0}
+.vsec{display:flex;flex-direction:column;gap:8px}
+.typelist{display:flex;flex-direction:column}
+.typelist label{display:flex;gap:8px;align-items:center;font-size:12.5px;padding-block:4px;border-bottom:1px solid var(--line);cursor:pointer}
+.typelist .n{margin-left:auto;font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.typelist code,.kv code{font-family:var(--f-mono);font-size:10.5px;color:var(--muted)}
+.pset{border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.pset summary{padding:7px 10px;font-weight:600;font-size:12.5px;cursor:pointer;background:var(--ground)}
+.pset dl{margin:0;padding:8px 10px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px 10px;font-size:12px}
+.pset dt{color:var(--muted);overflow-wrap:anywhere}.pset dd{margin:0;overflow-wrap:anywhere}
+.badge3d{font-family:var(--f-mono);font-size:10px;font-weight:600;color:var(--accent);border:1px solid currentColor;border-radius:3px;padding:0 4px;margin-left:6px;vertical-align:1px}
+.filebtn{position:relative;overflow:hidden}
+.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+@media (max-width:760px){.viewer{overflow:auto;grid-template-rows:auto auto}.viewer-b{grid-template-columns:1fr;grid-template-rows:60vh auto}.vside{border-left:0;border-top:1px solid var(--line);overflow:visible}}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--panel);padding:9px 16px;border-radius:8px;font-weight:600;z-index:3000;box-shadow:var(--shadow);max-width:calc(100% - 32px)}
+
+/* Leaflet core (inlined subset) */
+.leaflet-pane,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-zoom-box,.leaflet-layer{position:absolute;left:0;top:0}
+.leaflet-container{overflow:hidden;background:var(--sea);-webkit-tap-highlight-color:transparent;font-family:var(--f-body);touch-action:none}
+.leaflet-container .leaflet-overlay-pane svg{max-width:none!important;max-height:none!important}
+.leaflet-pane{z-index:400}.leaflet-tile-pane{z-index:200}.leaflet-overlay-pane{z-index:400}.leaflet-marker-pane{z-index:600}.leaflet-tooltip-pane{z-index:650}.leaflet-popup-pane{z-index:700}
+.leaflet-map-pane svg{z-index:200}
+.leaflet-zoom-animated{transform-origin:0 0}
+.leaflet-zoom-anim .leaflet-zoom-animated{transition:transform .25s cubic-bezier(0,0,.25,1)}
+.leaflet-zoom-anim .leaflet-zoom-hide{visibility:hidden}
+.leaflet-interactive{cursor:pointer}
+.leaflet-grab{cursor:grab}.leaflet-dragging .leaflet-grab,.leaflet-dragging .leaflet-grab .leaflet-interactive{cursor:grabbing}
+.leaflet-crosshair,.leaflet-crosshair .leaflet-interactive{cursor:crosshair}
+.leaflet-pane>svg path{pointer-events:none}
+.leaflet-pane>svg path.leaflet-interactive{pointer-events:visiblePainted;pointer-events:auto}
+.leaflet-top,.leaflet-bottom{position:absolute;z-index:1000;pointer-events:none}
+.leaflet-top{top:0}.leaflet-bottom{bottom:0}.leaflet-left{left:0}.leaflet-right{right:0}
+.leaflet-control{position:relative;z-index:800;pointer-events:auto;float:left;clear:both}
+.leaflet-top .leaflet-control{margin-top:12px}.leaflet-left .leaflet-control{margin-left:12px}
+.leaflet-bar{background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);overflow:hidden}
+.leaflet-bar a{display:block;width:32px;height:32px;line-height:32px;text-align:center;text-decoration:none;color:var(--ink);font-size:18px;font-weight:600}
+.leaflet-bar a+a{border-top:1px solid var(--line)}
+.leaflet-bar a:hover{background:var(--ground)}
+.leaflet-bar a.leaflet-disabled{color:var(--muted);opacity:.5;cursor:default}
+.leaflet-tooltip{position:absolute;padding:4px 8px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:5px;white-space:nowrap;pointer-events:none;box-shadow:var(--shadow);font-size:12px;font-weight:600}
+.leaflet-tooltip-top{margin-top:-8px}.leaflet-tooltip-bottom{margin-top:8px}.leaflet-tooltip-left{margin-left:-8px}.leaflet-tooltip-right{margin-left:8px}
+
+path.country{fill:var(--land);stroke:var(--coast);stroke-width:.6}
+path.country.t1{fill:var(--tint1)} path.country.t2{fill:var(--tint2)} path.country.t3{fill:var(--tint3)} path.country.t4{fill:var(--tint4)}
+path.country:hover{stroke:var(--accent);stroke-width:1.2}
+path.grat{stroke:var(--grat);stroke-width:.8;fill:none}
+path.mk{stroke:var(--panel);stroke-width:2;fill-opacity:1}
+path.mk.sel{stroke:var(--ink);stroke-width:3}
+path.mk.bangunan{fill:var(--c-bangunan)} path.mk.jalan{fill:var(--c-jalan)} path.mk.jembatan{fill:var(--c-jembatan)} path.mk.bendungan{fill:var(--c-bendungan)}
+path.mk.pelabuhan{fill:var(--c-pelabuhan)} path.mk.bandara{fill:var(--c-bandara)} path.mk.energi{fill:var(--c-energi)} path.mk.lainnya{fill:var(--c-lainnya)}
+path.ring{fill:none;stroke:var(--bad);stroke-width:2.2;animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{stroke-opacity:.95}50%{stroke-opacity:.25}}
+path.pick{fill:none;stroke:var(--ink);stroke-width:2;stroke-dasharray:4 3}
+
+@media (max-width:760px){
+  .app,.app.full{grid-template-columns:1fr;grid-template-rows:auto 52vh auto;height:auto;min-height:100%}
+  .app.full{grid-template-rows:auto 1fr}
+  .main{grid-row:2;min-height:320px}
+  .app.full .main{min-height:calc(100vh - 110px)}
+  .side{grid-row:3;border-right:0;border-top:1px solid var(--line)}
+  .side-scroll{overflow:visible}
+  .drawer{position:fixed;top:auto;left:0;right:0;bottom:0;width:100%;max-height:82vh;border-radius:14px 14px 0 0;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .legend{display:none}
+  .health{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .kv{grid-template-columns:100px 1fr}
+}
+@media (prefers-reduced-motion: reduce){.leaflet-zoom-anim .leaflet-zoom-animated{transition:none}path.ring{animation:none}}
+</style>
+
+<div class="app" id="app">
+  <header class="bar">
+    <div class="brand"><span class="code">CIS</span><h1>Country Information System</h1></div>
+    <nav class="nav" role="tablist" aria-label="Modul">
+      <button type="button" role="tab" data-view="peta" aria-selected="true">Peta aset</button>
+      <button type="button" role="tab" data-view="sensor" aria-selected="false">Sensor IoT <span class="badge" id="b-sensor">0</span></button>
+      <button type="button" role="tab" data-view="laporan" aria-selected="false">Laporan gangguan <span class="badge" id="b-laporan">0</span></button>
+      <button type="button" role="tab" data-view="perawatan" aria-selected="false">Perawatan <span class="badge" id="b-perawatan">0</span></button>
+    </nav>
+    <span class="grow"></span>
+    <span class="role" id="role" title="Peran Anda di registri ini">Memuat</span>
+    <button class="btn" id="btn-export" type="button" hidden>Ekspor CSV</button>
+    <button class="btn primary" id="btn-add" type="button" hidden>+ Tambah aset</button>
+  </header>
+
+  <aside class="side" aria-label="Registri aset">
+    <p class="notice" id="notice" hidden></p>
+    <div class="side-scroll">
+      <section class="sect">
+        <p class="eyebrow">Ringkasan</p>
+        <div class="totals"><span class="big" id="s-total">0</span><span class="sub" id="s-sub">aset terdaftar</span></div>
+        <div class="health" id="health"></div>
+        <div class="cond-bar" id="s-condbar" aria-hidden="true"></div>
+        <div class="cond-legend" id="s-condleg"></div>
+      </section>
+      <section class="sect">
+        <p class="eyebrow">Kategori</p>
+        <div class="chips" id="chips"></div>
+      </section>
+      <section class="sect">
+        <div class="filters">
+          <input class="in full" id="f-q" type="search" placeholder="Cari nama, wilayah, pengelola…" aria-label="Cari aset">
+          <select class="in" id="f-country" aria-label="Filter negara"><option value="">Semua negara</option></select>
+          <select class="in" id="f-cond" aria-label="Filter kondisi"><option value="">Semua kondisi</option></select>
+        </div>
+      </section>
+      <ul class="list" id="list"></ul>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div id="map" aria-label="Peta dunia aset"></div>
+    <div class="banner" id="banner" role="status" hidden></div>
+    <div class="legend" id="legend"></div>
+    <div class="cursor" id="cursor">—</div>
+    <div class="pickhint" id="pickhint" hidden>Klik peta untuk menentukan lokasi</div>
+    <section class="pane" id="pane" hidden></section>
+    <section class="drawer" id="drawer" hidden aria-live="polite"></section>
+  </main>
+</div>
+<div class="viewer" id="viewer" hidden role="dialog" aria-label="Penampil model 3D"></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>window.CIS_STANDALONE=true;window.CIS_SEED={"assets": [{"contoh": true, "dimensi": "1,18 km", "diperbarui": "2026-09-29T00:00:00.000Z", "kategori": "jembatan", "keterangan": "Melintasi Sungai Musi. Kondisi adalah data contoh.", "kondisi": "ringan", "lat": -2.9918, "lng": 104.7632, "nama": "Jembatan Ampera", "negara": "Indonesia", "pengelola": "Pemerintah Provinsi Sumatera Selatan", "tahun": "1965", "wilayah": "Palembang, Sumatera Selatan", "id": "ex-ampera"}, {"contoh": true, "dimensi": "116 km", "diperbarui": "2026-09-29T00:00:00.000Z", "kategori": "jalan", "keterangan": "Titik mewakili ruas tengah. Kondisi adalah data contoh.", "kondisi": "ringan", "lat": -6.55, "lng": 107.9, "nama": "Jalan Tol Cikopo–Palimanan", "negara": "Indonesia", "pengelola": "Badan Usaha Jalan Tol", "tahun": "2015", "wilayah": "Jawa Barat", "id": "ex-cipali"}, {"contoh": true, "dimensi": "", "diperbarui": "2026-09-29T00:00:00.000Z", "kategori": "energi", "keterangan": "Pembangkit listrik tenaga air. Data contoh.", "kondisi": "baik", "lat": -6.7, "lng": 107.36, "nama": "PLTA Cirata", "negara": "Indonesia", "pengelola": "PLN", "tahun": "1988", "wilayah": "Jawa Barat", "id": "ex-cirata"}, {"contoh": true, "dimensi": "", "diperbarui": "2026-09-29T00:00:00.000Z", "kategori": "bangunan", "keterangan": "Kantor gubernur. Data contoh.", "kondisi": "baik", "lat": -6.9025, "lng": 107.6188, "nama": "Gedung Sate", "negara": "Indonesia", "pengelola": "Pemerintah Provinsi Jawa Barat", "tahun": "1924", "wilayah": "Bandung, Jawa Barat", "id": "ex-gedungsate"}, {"contoh": true, "dimensi": "2,7 km", "diperbarui": "2026-09-29T00:00:00.000Z", "kategori": "jembatan", "keterangan": "Data contoh.", "kondisi": "baik", "lat": 37.8199, "lng": -122.4783, "nama": "Golden Gate Bridge", "negara": "United States", "pengelola": "Golden Gate Bridge District", "tahun": "1937", "wilayah": "San Francisco, California", "id": "ex-goldengate"}, {"contoh": true, "dimensi": "55 km", "diperbarui": "2026-09-29T00:00:00.000Z", "kategori": "jembatan", "keterangan": "Data contoh.", "kondisi": "baik", "lat": 22.28, "lng": 113.78, "nama": "Jembatan Hong Kong–Zhuhai–Makau", "negara": "China", "pengelola": "", "tahun": "2018", "wilayah": "Delta Sungai Mutiara", "id": "ex-hzmb"}, {"contoh": true, "dimensi": "", "diperbarui": "2026-09-29T00:00:00.000Z", "kategori": "bangunan", "keterangan": "Data contoh.", "kondisi": "bangun", "lat": -0.97, "lng": 116.7, "nama": "Kawasan Inti Pusat Pemerintahan IKN", "negara": "Indonesia", "pengelola": "Otorita IKN", "tahun": "", "wilayah": "Kalimantan Timur", "id": "ex-ikn"}, {"contoh": true, "dimensi": "Tinggi 105 m", "diperbarui": "2026-09-29T00:00:00.000Z", "kategori": "bendungan", "keterangan": "Kondisi adalah data contoh.", "kondisi": "ringan", "lat": -6.527, "lng": 107.3897, "nama": "Bendungan Jatiluhur", "negara": "Indonesia", "pengelola": "Perum Jasa Tirta II", "tahun": "1967", "wilayah": "Purwakarta, Jawa Barat", "id": "ex-jatiluhur"}, {"contoh": true, "dimensi": "", "diperbarui": "2026-09-29T00:00:00.000Z", "kategori": "pelabuhan", "keterangan": "Pelabuhan peti kemas utama. Data contoh.", "kondisi": "baik", "lat": -6.1045, "lng": 106.8866, "nama": "Pelabuhan Tanjung Priok", "negara": "Indonesia", "pengelola": "PT Pelabuhan Indonesia", "tahun": "1886", "wilayah": "Jakarta Utara", "id": "ex-priok"}, {"contoh": true, "dimensi": "3 landasan pacu", "diperbarui": "2026-09-29T00:00:00.000Z", "kategori": "bandara", "keterangan": "Data contoh.", "kondisi": "baik", "lat": -6.1256, "lng": 106.6559, "nama": "Bandara Internasional Soekarno-Hatta", "negara": "Indonesia", "pengelola": "PT Angkasa Pura", "tahun": "1985", "wilayah": "Tangerang, Banten", "id": "ex-soetta"}, {"contoh": true, "dimensi": "5,4 km", "diperbarui": "2026-09-29T00:00:00.000Z", "kategori": "jembatan", "keterangan": "Menghubungkan Surabaya dan Pulau Madura. Data contoh.", "kondisi": "baik", "lat": -7.185, "lng": 112.779, "nama": "Jembatan Suramadu", "negara": "Indonesia", "pengelola": "Kementerian PUPR", "tahun": "2009", "wilayah": "Jawa Timur", "id": "ex-suramadu"}, {"contoh": true, "dimensi": "Panjang 2,3 km", "diperbarui": "2026-09-29T00:00:00.000Z", "kategori": "bendungan", "keterangan": "Data contoh.", "kondisi": "baik", "lat": 30.823, "lng": 111.0032, "nama": "Bendungan Tiga Ngarai", "negara": "China", "pengelola": "China Three Gorges Corporation", "tahun": "2012", "wilayah": "Hubei", "id": "ex-threegorges"}], "sensors": [{"assetId": "ex-ampera", "contoh": true, "dibuat": "2026-09-29T00:00:00.000Z", "diperbarui": "2026-09-29T00:00:00.000Z", "max": 400, "min": null, "nama": "STR-02 Gelagar tengah", "nilai": 452, "posisi": "Gelagar bentang tengah", "riwayat": [{"t": "2026-09-25T22:00:00.000Z", "v": 325.4}, {"t": "2026-09-26T00:00:00.000Z", "v": 337.8}, {"t": "2026-09-26T02:00:00.000Z", "v": 349.1}, {"t": "2026-09-26T04:00:00.000Z", "v": 362.6}, {"t": "2026-09-26T06:00:00.000Z", "v": 353.2}, {"t": "2026-09-26T08:00:00.000Z", "v": 334}, {"t": "2026-09-26T10:00:00.000Z", "v": 328.8}, {"t": "2026-09-26T12:00:00.000Z", "v": 306}, {"t": "2026-09-26T14:00:00.000Z", "v": 277.7}, {"t": "2026-09-26T16:00:00.000Z", "v": 282.2}, {"t": "2026-09-26T18:00:00.000Z", "v": 286.1}, {"t": "2026-09-26T20:00:00.000Z", "v": 311.3}, {"t": "2026-09-26T22:00:00.000Z", "v": 326.9}, {"t": "2026-09-27T00:00:00.000Z", "v": 333.6}, {"t": "2026-09-27T02:00:00.000Z", "v": 369}, {"t": "2026-09-27T04:00:00.000Z", "v": 348.5}, {"t": "2026-09-27T06:00:00.000Z", "v": 352.2}, {"t": "2026-09-27T08:00:00.000Z", "v": 347.7}, {"t": "2026-09-27T10:00:00.000Z", "v": 309.6}, {"t": "2026-09-27T12:00:00.000Z", "v": 299.7}, {"t": "2026-09-27T14:00:00.000Z", "v": 271.5}, {"t": "2026-09-27T16:00:00.000Z", "v": 285}, {"t": "2026-09-27T18:00:00.000Z", "v": 293.3}, {"t": "2026-09-27T20:00:00.000Z", "v": 302.2}, {"t": "2026-09-27T22:00:00.000Z", "v": 331.3}, {"t": "2026-09-28T00:00:00.000Z", "v": 334.4}, {"t": "2026-09-28T02:00:00.000Z", "v": 360.5}, {"t": "2026-09-28T04:00:00.000Z", "v": 362.8}, {"t": "2026-09-28T06:00:00.000Z", "v": 357}, {"t": "2026-09-28T08:00:00.000Z", "v": 338.7}, {"t": "2026-09-28T10:00:00.000Z", "v": 330.2}, {"t": "2026-09-28T12:00:00.000Z", "v": 313.3}, {"t": "2026-09-28T14:00:00.000Z", "v": 284.6}, {"t": "2026-09-28T16:00:00.000Z", "v": 284.9}, {"t": "2026-09-28T18:00:00.000Z", "v": 438}, {"t": "2026-09-28T20:00:00.000Z", "v": 452}], "satuan": "µε", "status": "aktif", "streamUrl": "", "tipe": "regangan", "waktu": "2026-09-28T20:00:00.000Z", "id": "ex-s-ampera-regangan"}, {"assetId": "ex-cirata", "contoh": true, "dibuat": "2026-09-29T00:00:00.000Z", "diperbarui": "2026-09-29T00:00:00.000Z", "max": 240, "min": 210, "nama": "VM-01 Switchyard", "nilai": 221.8, "posisi": "Switchyard 150 kV, sisi sekunder", "riwayat": [{"t": "2026-09-27T06:00:00.000Z", "v": 225.1}, {"t": "2026-09-27T08:00:00.000Z", "v": 226.3}, {"t": "2026-09-27T10:00:00.000Z", "v": 228.6}, {"t": "2026-09-27T12:00:00.000Z", "v": 225}, {"t": "2026-09-27T14:00:00.000Z", "v": 220.7}, {"t": "2026-09-27T16:00:00.000Z", "v": 222.2}, {"t": "2026-09-27T18:00:00.000Z", "v": 221.3}, {"t": "2026-09-27T20:00:00.000Z", "v": 226.1}, {"t": "2026-09-27T22:00:00.000Z", "v": 229.7}, {"t": "2026-09-28T00:00:00.000Z", "v": 228.5}, {"t": "2026-09-28T02:00:00.000Z", "v": 224.3}, {"t": "2026-09-28T04:00:00.000Z", "v": 221.8}, {"t": "2026-09-28T06:00:00.000Z", "v": 221.4}, {"t": "2026-09-28T08:00:00.000Z", "v": 224.9}, {"t": "2026-09-28T10:00:00.000Z", "v": 225.8}, {"t": "2026-09-28T12:00:00.000Z", "v": 229.2}, {"t": "2026-09-28T14:00:00.000Z", "v": 226.3}, {"t": "2026-09-28T16:00:00.000Z", "v": 222.9}, {"t": "2026-09-28T18:00:00.000Z", "v": 222.3}, {"t": "2026-09-28T20:00:00.000Z", "v": 221.8}], "satuan": "V", "status": "offline", "streamUrl": "", "tipe": "tegangan", "waktu": "2026-09-28T20:00:00.000Z", "id": "ex-s-cirata-tegangan"}, {"assetId": "ex-gedungsate", "contoh": true, "dibuat": "2026-09-29T00:00:00.000Z", "diperbarui": "2026-09-29T00:00:00.000Z", "max": 1000, "min": null, "nama": "CO2-01 Aula utama", "nilai": 520.4, "posisi": "Aula lantai 1", "riwayat": [{"t": "2026-09-25T22:00:00.000Z", "v": 593.4}, {"t": "2026-09-26T00:00:00.000Z", "v": 713.5}, {"t": "2026-09-26T02:00:00.000Z", "v": 777}, {"t": "2026-09-26T04:00:00.000Z", "v": 853.1}, {"t": "2026-09-26T06:00:00.000Z", "v": 860.7}, {"t": "2026-09-26T08:00:00.000Z", "v": 733.7}, {"t": "2026-09-26T10:00:00.000Z", "v": 702.4}, {"t": "2026-09-26T12:00:00.000Z", "v": 618.6}, {"t": "2026-09-26T14:00:00.000Z", "v": 548.7}, {"t": "2026-09-26T16:00:00.000Z", "v": 453.8}, {"t": "2026-09-26T18:00:00.000Z", "v": 460.6}, {"t": "2026-09-26T20:00:00.000Z", "v": 527.2}, {"t": "2026-09-26T22:00:00.000Z", "v": 613.6}, {"t": "2026-09-27T00:00:00.000Z", "v": 704.5}, {"t": "2026-09-27T02:00:00.000Z", "v": 820.8}, {"t": "2026-09-27T04:00:00.000Z", "v": 878}, {"t": "2026-09-27T06:00:00.000Z", "v": 846.7}, {"t": "2026-09-27T08:00:00.000Z", "v": 737.5}, {"t": "2026-09-27T10:00:00.000Z", "v": 668.4}, {"t": "2026-09-27T12:00:00.000Z", "v": 596}, {"t": "2026-09-27T14:00:00.000Z", "v": 444.3}, {"t": "2026-09-27T16:00:00.000Z", "v": 489.3}, {"t": "2026-09-27T18:00:00.000Z", "v": 543.3}, {"t": "2026-09-27T20:00:00.000Z", "v": 593.9}, {"t": "2026-09-27T22:00:00.000Z", "v": 680}, {"t": "2026-09-28T00:00:00.000Z", "v": 737.4}, {"t": "2026-09-28T02:00:00.000Z", "v": 767.3}, {"t": "2026-09-28T04:00:00.000Z", "v": 864.7}, {"t": "2026-09-28T06:00:00.000Z", "v": 785.8}, {"t": "2026-09-28T08:00:00.000Z", "v": 776.1}, {"t": "2026-09-28T10:00:00.000Z", "v": 706.6}, {"t": "2026-09-28T12:00:00.000Z", "v": 547.5}, {"t": "2026-09-28T14:00:00.000Z", "v": 482.3}, {"t": "2026-09-28T16:00:00.000Z", "v": 523.6}, {"t": "2026-09-28T18:00:00.000Z", "v": 521.1}, {"t": "2026-09-28T20:00:00.000Z", "v": 520.4}], "satuan": "ppm", "status": "aktif", "streamUrl": "", "tipe": "co2", "waktu": "2026-09-28T20:00:00.000Z", "id": "ex-s-gedungsate-co2"}, {"assetId": "ex-gedungsate", "contoh": true, "dibuat": "2026-09-29T00:00:00.000Z", "diperbarui": "2026-09-29T00:00:00.000Z", "max": 60, "min": 40, "nama": "RH-01 Ruang arsip", "nilai": 67, "posisi": "Lantai dasar, ruang arsip", "riwayat": [{"t": "2026-09-25T22:00:00.000Z", "v": 54.9}, {"t": "2026-09-26T00:00:00.000Z", "v": 57.4}, {"t": "2026-09-26T02:00:00.000Z", "v": 57.7}, {"t": "2026-09-26T04:00:00.000Z", "v": 58.4}, {"t": "2026-09-26T06:00:00.000Z", "v": 58.7}, {"t": "2026-09-26T08:00:00.000Z", "v": 56.6}, {"t": "2026-09-26T10:00:00.000Z", "v": 56.3}, {"t": "2026-09-26T12:00:00.000Z", "v": 51.1}, {"t": "2026-09-26T14:00:00.000Z", "v": 48.8}, {"t": "2026-09-26T16:00:00.000Z", "v": 51.8}, {"t": "2026-09-26T18:00:00.000Z", "v": 50.8}, {"t": "2026-09-26T20:00:00.000Z", "v": 51.1}, {"t": "2026-09-26T22:00:00.000Z", "v": 55.2}, {"t": "2026-09-27T00:00:00.000Z", "v": 55.6}, {"t": "2026-09-27T02:00:00.000Z", "v": 59.4}, {"t": "2026-09-27T04:00:00.000Z", "v": 61.9}, {"t": "2026-09-27T06:00:00.000Z", "v": 60.8}, {"t": "2026-09-27T08:00:00.000Z", "v": 58.3}, {"t": "2026-09-27T10:00:00.000Z", "v": 54}, {"t": "2026-09-27T12:00:00.000Z", "v": 52}, {"t": "2026-09-27T14:00:00.000Z", "v": 49.3}, {"t": "2026-09-27T16:00:00.000Z", "v": 51.1}, {"t": "2026-09-27T18:00:00.000Z", "v": 50.8}, {"t": "2026-09-27T20:00:00.000Z", "v": 53.6}, {"t": "2026-09-27T22:00:00.000Z", "v": 54.3}, {"t": "2026-09-28T00:00:00.000Z", "v": 56.4}, {"t": "2026-09-28T02:00:00.000Z", "v": 60.6}, {"t": "2026-09-28T04:00:00.000Z", "v": 61.9}, {"t": "2026-09-28T06:00:00.000Z", "v": 60.7}, {"t": "2026-09-28T08:00:00.000Z", "v": 58.7}, {"t": "2026-09-28T10:00:00.000Z", "v": 56.3}, {"t": "2026-09-28T12:00:00.000Z", "v": 53.5}, {"t": "2026-09-28T14:00:00.000Z", "v": 49.6}, {"t": "2026-09-28T16:00:00.000Z", "v": 50.1}, {"t": "2026-09-28T18:00:00.000Z", "v": 50.1}, {"t": "2026-09-28T20:00:00.000Z", "v": 67}], "satuan": "%RH", "status": "aktif", "streamUrl": "", "tipe": "kelembaban", "waktu": "2026-09-28T20:00:00.000Z", "id": "ex-s-gedungsate-rh"}, {"assetId": "ex-gedungsate", "contoh": true, "dibuat": "2026-09-29T00:00:00.000Z", "diperbarui": "2026-09-29T00:00:00.000Z", "max": 26, "min": 18, "nama": "TMP-01 Ruang arsip", "nilai": 22.7, "posisi": "Lantai dasar, ruang arsip", "riwayat": [{"t": "2026-09-25T22:00:00.000Z", "v": 22.9}, {"t": "2026-09-26T00:00:00.000Z", "v": 23.8}, {"t": "2026-09-26T02:00:00.000Z", "v": 24.8}, {"t": "2026-09-26T04:00:00.000Z", "v": 24.7}, {"t": "2026-09-26T06:00:00.000Z", "v": 24.3}, {"t": "2026-09-26T08:00:00.000Z", "v": 23.9}, {"t": "2026-09-26T10:00:00.000Z", "v": 23.2}, {"t": "2026-09-26T12:00:00.000Z", "v": 21.8}, {"t": "2026-09-26T14:00:00.000Z", "v": 22.1}, {"t": "2026-09-26T16:00:00.000Z", "v": 21.8}, {"t": "2026-09-26T18:00:00.000Z", "v": 22.1}, {"t": "2026-09-26T20:00:00.000Z", "v": 22.5}, {"t": "2026-09-26T22:00:00.000Z", "v": 22.9}, {"t": "2026-09-27T00:00:00.000Z", "v": 23.6}, {"t": "2026-09-27T02:00:00.000Z", "v": 23.9}, {"t": "2026-09-27T04:00:00.000Z", "v": 24.6}, {"t": "2026-09-27T06:00:00.000Z", "v": 23.9}, {"t": "2026-09-27T08:00:00.000Z", "v": 23.3}, {"t": "2026-09-27T10:00:00.000Z", "v": 22.7}, {"t": "2026-09-27T12:00:00.000Z", "v": 21.9}, {"t": "2026-09-27T14:00:00.000Z", "v": 21.5}, {"t": "2026-09-27T16:00:00.000Z", "v": 21.1}, {"t": "2026-09-27T18:00:00.000Z", "v": 21.2}, {"t": "2026-09-27T20:00:00.000Z", "v": 21.9}, {"t": "2026-09-27T22:00:00.000Z", "v": 22.6}, {"t": "2026-09-28T00:00:00.000Z", "v": 23.6}, {"t": "2026-09-28T02:00:00.000Z", "v": 23.8}, {"t": "2026-09-28T04:00:00.000Z", "v": 24.9}, {"t": "2026-09-28T06:00:00.000Z", "v": 24.4}, {"t": "2026-09-28T08:00:00.000Z", "v": 23.4}, {"t": "2026-09-28T10:00:00.000Z", "v": 22.8}, {"t": "2026-09-28T12:00:00.000Z", "v": 22.1}, {"t": "2026-09-28T14:00:00.000Z", "v": 21.6}, {"t": "2026-09-28T16:00:00.000Z", "v": 21.1}, {"t": "2026-09-28T18:00:00.000Z", "v": 22}, {"t": "2026-09-28T20:00:00.000Z", "v": 22.7}], "satuan": "°C", "status": "aktif", "streamUrl": "", "tipe": "suhu", "waktu": "2026-09-28T20:00:00.000Z", "id": "ex-s-gedungsate-suhu"}, {"assetId": "ex-jatiluhur", "contoh": true, "dibuat": "2026-09-29T00:00:00.000Z", "diperbarui": "2026-09-29T00:00:00.000Z", "max": 111, "min": 75, "nama": "AWLR-01 Waduk", "nilai": 103.2, "posisi": "Menara intake", "riwayat": [{"t": "2026-09-25T22:00:00.000Z", "v": 104.1}, {"t": "2026-09-26T00:00:00.000Z", "v": 105}, {"t": "2026-09-26T02:00:00.000Z", "v": 105.5}, {"t": "2026-09-26T04:00:00.000Z", "v": 105.4}, {"t": "2026-09-26T06:00:00.000Z", "v": 105.2}, {"t": "2026-09-26T08:00:00.000Z", "v": 104.9}, {"t": "2026-09-26T10:00:00.000Z", "v": 103.7}, {"t": "2026-09-26T12:00:00.000Z", "v": 103.2}, {"t": "2026-09-26T14:00:00.000Z", "v": 102.5}, {"t": "2026-09-26T16:00:00.000Z", "v": 102.3}, {"t": "2026-09-26T18:00:00.000Z", "v": 102.4}, {"t": "2026-09-26T20:00:00.000Z", "v": 103.4}, {"t": "2026-09-26T22:00:00.000Z", "v": 103.8}, {"t": "2026-09-27T00:00:00.000Z", "v": 104.6}, {"t": "2026-09-27T02:00:00.000Z", "v": 105.2}, {"t": "2026-09-27T04:00:00.000Z", "v": 105.7}, {"t": "2026-09-27T06:00:00.000Z", "v": 105}, {"t": "2026-09-27T08:00:00.000Z", "v": 104.7}, {"t": "2026-09-27T10:00:00.000Z", "v": 104}, {"t": "2026-09-27T12:00:00.000Z", "v": 103.5}, {"t": "2026-09-27T14:00:00.000Z", "v": 102.9}, {"t": "2026-09-27T16:00:00.000Z", "v": 102.7}, {"t": "2026-09-27T18:00:00.000Z", "v": 102.6}, {"t": "2026-09-27T20:00:00.000Z", "v": 103.2}, {"t": "2026-09-27T22:00:00.000Z", "v": 103.9}, {"t": "2026-09-28T00:00:00.000Z", "v": 105}, {"t": "2026-09-28T02:00:00.000Z", "v": 105.6}, {"t": "2026-09-28T04:00:00.000Z", "v": 105.3}, {"t": "2026-09-28T06:00:00.000Z", "v": 105.1}, {"t": "2026-09-28T08:00:00.000Z", "v": 104.6}, {"t": "2026-09-28T10:00:00.000Z", "v": 103.8}, {"t": "2026-09-28T12:00:00.000Z", "v": 103.2}, {"t": "2026-09-28T14:00:00.000Z", "v": 102.8}, {"t": "2026-09-28T16:00:00.000Z", "v": 102.4}, {"t": "2026-09-28T18:00:00.000Z", "v": 102.4}, {"t": "2026-09-28T20:00:00.000Z", "v": 103.2}], "satuan": "m", "status": "aktif", "streamUrl": "", "tipe": "airmuka", "waktu": "2026-09-28T20:00:00.000Z", "id": "ex-s-jatiluhur-air"}, {"assetId": "ex-soetta", "contoh": true, "dibuat": "2026-09-29T00:00:00.000Z", "diperbarui": "2026-09-29T00:00:00.000Z", "max": 55, "min": null, "nama": "AQ-01 Terminal 3", "nilai": 26.3, "posisi": "Area kedatangan", "riwayat": [{"t": "2026-09-25T22:00:00.000Z", "v": 27}, {"t": "2026-09-26T00:00:00.000Z", "v": 31.2}, {"t": "2026-09-26T02:00:00.000Z", "v": 40.2}, {"t": "2026-09-26T04:00:00.000Z", "v": 40.5}, {"t": "2026-09-26T06:00:00.000Z", "v": 34.1}, {"t": "2026-09-26T08:00:00.000Z", "v": 36.6}, {"t": "2026-09-26T10:00:00.000Z", "v": 33.8}, {"t": "2026-09-26T12:00:00.000Z", "v": 27.3}, {"t": "2026-09-26T14:00:00.000Z", "v": 21.9}, {"t": "2026-09-26T16:00:00.000Z", "v": 22.4}, {"t": "2026-09-26T18:00:00.000Z", "v": 20.1}, {"t": "2026-09-26T20:00:00.000Z", "v": 22.1}, {"t": "2026-09-26T22:00:00.000Z", "v": 33.8}, {"t": "2026-09-27T00:00:00.000Z", "v": 35.2}, {"t": "2026-09-27T02:00:00.000Z", "v": 37.1}, {"t": "2026-09-27T04:00:00.000Z", "v": 41.5}, {"t": "2026-09-27T06:00:00.000Z", "v": 36.4}, {"t": "2026-09-27T08:00:00.000Z", "v": 37}, {"t": "2026-09-27T10:00:00.000Z", "v": 32.6}, {"t": "2026-09-27T12:00:00.000Z", "v": 23.7}, {"t": "2026-09-27T14:00:00.000Z", "v": 21.1}, {"t": "2026-09-27T16:00:00.000Z", "v": 20.3}, {"t": "2026-09-27T18:00:00.000Z", "v": 21}, {"t": "2026-09-27T20:00:00.000Z", "v": 26.7}, {"t": "2026-09-27T22:00:00.000Z", "v": 28.1}, {"t": "2026-09-28T00:00:00.000Z", "v": 33.4}, {"t": "2026-09-28T02:00:00.000Z", "v": 34}, {"t": "2026-09-28T04:00:00.000Z", "v": 41.3}, {"t": "2026-09-28T06:00:00.000Z", "v": 35.8}, {"t": "2026-09-28T08:00:00.000Z", "v": 33.7}, {"t": "2026-09-28T10:00:00.000Z", "v": 30.7}, {"t": "2026-09-28T12:00:00.000Z", "v": 29.2}, {"t": "2026-09-28T14:00:00.000Z", "v": 22.4}, {"t": "2026-09-28T16:00:00.000Z", "v": 25.3}, {"t": "2026-09-28T18:00:00.000Z", "v": 23.1}, {"t": "2026-09-28T20:00:00.000Z", "v": 26.3}], "satuan": "µg/m³", "status": "aktif", "streamUrl": "", "tipe": "pm25", "waktu": "2026-09-28T20:00:00.000Z", "id": "ex-s-soetta-pm25"}, {"assetId": "ex-suramadu", "contoh": true, "dibuat": "2026-09-29T00:00:00.000Z", "diperbarui": "2026-09-29T00:00:00.000Z", "max": null, "min": null, "nama": "CAM-01 Gerbang Surabaya", "nilai": null, "posisi": "Gerbang tol sisi Surabaya", "riwayat": [], "satuan": "", "status": "aktif", "streamUrl": "", "tipe": "cctv", "waktu": null, "id": "ex-s-suramadu-cctv"}, {"assetId": "ex-suramadu", "contoh": true, "dibuat": "2026-09-29T00:00:00.000Z", "diperbarui": "2026-09-29T00:00:00.000Z", "max": 5, "min": null, "nama": "VIB-01 Bentang utama", "nilai": 1.6, "posisi": "Pilon utara", "riwayat": [{"t": "2026-09-25T22:00:00.000Z", "v": 2.1}, {"t": "2026-09-26T00:00:00.000Z", "v": 2.3}, {"t": "2026-09-26T02:00:00.000Z", "v": 3}, {"t": "2026-09-26T04:00:00.000Z", "v": 2.7}, {"t": "2026-09-26T06:00:00.000Z", "v": 2.9}, {"t": "2026-09-26T08:00:00.000Z", "v": 2.5}, {"t": "2026-09-26T10:00:00.000Z", "v": 1.8}, {"t": "2026-09-26T12:00:00.000Z", "v": 1.8}, {"t": "2026-09-26T14:00:00.000Z", "v": 1.1}, {"t": "2026-09-26T16:00:00.000Z", "v": 1.3}, {"t": "2026-09-26T18:00:00.000Z", "v": 1.2}, {"t": "2026-09-26T20:00:00.000Z", "v": 1.5}, {"t": "2026-09-26T22:00:00.000Z", "v": 2.1}, {"t": "2026-09-27T00:00:00.000Z", "v": 2.9}, {"t": "2026-09-27T02:00:00.000Z", "v": 2.6}, {"t": "2026-09-27T04:00:00.000Z", "v": 2.8}, {"t": "2026-09-27T06:00:00.000Z", "v": 3}, {"t": "2026-09-27T08:00:00.000Z", "v": 3}, {"t": "2026-09-27T10:00:00.000Z", "v": 2.3}, {"t": "2026-09-27T12:00:00.000Z", "v": 1.7}, {"t": "2026-09-27T14:00:00.000Z", "v": 1.9}, {"t": "2026-09-27T16:00:00.000Z", "v": 1}, {"t": "2026-09-27T18:00:00.000Z", "v": 1.8}, {"t": "2026-09-27T20:00:00.000Z", "v": 1.6}, {"t": "2026-09-27T22:00:00.000Z", "v": 1.9}, {"t": "2026-09-28T00:00:00.000Z", "v": 2.3}, {"t": "2026-09-28T02:00:00.000Z", "v": 2.7}, {"t": "2026-09-28T04:00:00.000Z", "v": 3.3}, {"t": "2026-09-28T06:00:00.000Z", "v": 2.6}, {"t": "2026-09-28T08:00:00.000Z", "v": 2.7}, {"t": "2026-09-28T10:00:00.000Z", "v": 2.3}, {"t": "2026-09-28T12:00:00.000Z", "v": 1.7}, {"t": "2026-09-28T14:00:00.000Z", "v": 1.5}, {"t": "2026-09-28T16:00:00.000Z", "v": 1.1}, {"t": "2026-09-28T18:00:00.000Z", "v": 1.2}, {"t": "2026-09-28T20:00:00.000Z", "v": 1.6}], "satuan": "mm/s", "status": "aktif", "streamUrl": "", "tipe": "getaran", "waktu": "2026-09-28T20:00:00.000Z", "id": "ex-s-suramadu-getaran"}], "reports": [{"assetId": "ex-ampera", "contoh": true, "deskripsi": "Sensor STR-02 mencatat regangan di atas 400 µε dua kali berturut-turut. Perlu inspeksi visual sambungan gelagar.", "dibuat": "2026-09-28T19:10:00.000Z", "diperbarui": "2026-09-28T21:00:00.000Z", "jenis": "kerusakan", "judul": "Regangan gelagar tengah di atas ambang", "nilaiSensor": 452, "pelapor": null, "prioritas": "tinggi", "sensorId": "ex-s-ampera-regangan", "status": "ditangani", "tindak": [{"catatan": "Tim inspeksi dijadwalkan turun ke lokasi.", "oleh": null, "status": "ditangani", "t": "2026-09-28T21:00:00.000Z"}], "id": "ex-r-ampera"}, {"assetId": "ex-cirata", "contoh": true, "deskripsi": "VM-01 tidak mengirim data sejak kemarin sore.", "dibuat": "2026-09-28T10:00:00.000Z", "diperbarui": "2026-09-28T10:00:00.000Z", "jenis": "sensor", "judul": "Sensor tegangan switchyard offline", "pelapor": null, "prioritas": "sedang", "sensorId": "ex-s-cirata-tegangan", "status": "baru", "tindak": [], "id": "ex-r-cirata"}, {"assetId": "ex-soetta", "contoh": true, "deskripsi": "Rembesan air saat hujan deras di koridor gate.", "dibuat": "2026-09-10T03:00:00.000Z", "diperbarui": "2026-09-15T08:00:00.000Z", "jenis": "kerusakan", "judul": "Kebocoran atap di koridor keberangkatan", "pelapor": null, "prioritas": "rendah", "status": "selesai", "tindak": [{"catatan": "Sumber rembesan ditemukan pada talang.", "oleh": null, "status": "ditangani", "t": "2026-09-12T02:00:00.000Z"}, {"catatan": "Talang diganti, sudah diuji saat hujan.", "oleh": null, "status": "selesai", "t": "2026-09-15T08:00:00.000Z"}], "id": "ex-r-soetta"}], "maint": [{"assetId": "ex-ampera", "biaya": null, "catatan": "", "contoh": true, "dibuat": "2026-09-29T00:00:00.000Z", "diperbarui": "2026-09-29T00:00:00.000Z", "jenis": "inspeksi", "judul": "Inspeksi sambungan gelagar tengah", "laporanId": "ex-r-ampera", "pelaksana": "Tim inspeksi jembatan (contoh)", "status": "terjadwal", "tanggal": "2026-10-02", "id": "ex-m-ampera"}, {"assetId": "ex-gedungsate", "biaya": 4500000, "catatan": "", "contoh": true, "dibuat": "2026-09-29T00:00:00.000Z", "diperbarui": "2026-09-29T00:00:00.000Z", "jenis": "kalibrasi", "judul": "Kalibrasi sensor suhu dan kelembaban", "pelaksana": "Vendor kalibrasi (contoh)", "status": "selesai", "tanggal": "2026-07-03", "id": "ex-m-gedungsate"}, {"assetId": "ex-jatiluhur", "biaya": null, "catatan": "", "contoh": true, "dibuat": "2026-09-29T00:00:00.000Z", "diperbarui": "2026-09-29T00:00:00.000Z", "jenis": "inspeksi", "judul": "Inspeksi tahunan tubuh bendungan", "pelaksana": "Tim keamanan bendungan (contoh)", "status": "terjadwal", "tanggal": "2026-09-20", "id": "ex-m-jatiluhur"}, {"assetId": "ex-soetta", "biaya": 32000000, "catatan": "", "contoh": true, "dibuat": "2026-09-29T00:00:00.000Z", "diperbarui": "2026-09-29T00:00:00.000Z", "jenis": "perbaikan", "judul": "Penggantian talang koridor keberangkatan", "laporanId": "ex-r-soetta", "pelaksana": "Tim fasilitas bandara (contoh)", "status": "selesai", "tanggal": "2026-09-15", "id": "ex-m-soetta"}, {"assetId": "ex-suramadu", "biaya": 180000000, "catatan": "Seluruh baut pada 20 kabel diperiksa.", "contoh": true, "dibuat": "2026-09-29T00:00:00.000Z", "diperbarui": "2026-09-29T00:00:00.000Z", "jenis": "rutin", "judul": "Pengencangan baut kabel penggantung", "pelaksana": "Tim pemeliharaan jembatan (contoh)", "status": "selesai", "tanggal": "2026-08-14", "id": "ex-m-suramadu"}], "models": []};</script>
+<script>
+/* Surface script failures on the page so a blank registry is never silent. */
+window.addEventListener('error',function(e){var n=document.getElementById('notice');if(!n||(n.textContent&&!n.hidden))return;var src=e.target&&e.target.src;n.textContent=src?('Gagal memuat pustaka: '+src.split('/').slice(-3).join('/')):('Terjadi kesalahan: '+(e.message||'tidak diketahui'));n.hidden=false;var b=document.getElementById('banner');if(b){b.textContent=n.textContent;b.hidden=false;}},true);
+/* The world geometry script calls echarts.registerMap; capture it without loading ECharts. */
+window.echarts = { registerMap: function (name, geo) { if (name === 'world') window.__worldGeo = geo; } };
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/js/world.js"></script>
+<script>
+(function(){
+'use strict';
+const $ = s => document.querySelector(s);
+
+/* ================= Vocabulary ================= */
+const CATS = [
+  {k:'bangunan', n:'Bangunan', d:'M3 21V8l7-5 7 5v13M8 21v-6h4v6M3 21h18M17 21V11h4v10'},
+  {k:'jalan', n:'Jalan', d:'M7 3 4 21M17 3l3 18M12 4v3M12 11v3M12 18v3'},
+  {k:'jembatan', n:'Jembatan', d:'M2 16h20M4 16V9M20 16V9M4 9c3 4 13 4 16 0M8 16v-4M12 16v-3M16 16v-4'},
+  {k:'bendungan', n:'Bendungan', d:'M3 4h5l3 16H3zM11 14c2-1 3 1 5 0s3-1 5 0M11 18c2-1 3 1 5 0s3-1 5 0'},
+  {k:'pelabuhan', n:'Pelabuhan', d:'M12 3v14M8 7h8M5 13c0 4 3 7 7 7s7-3 7-7M3 13h4M17 13h4'},
+  {k:'bandara', n:'Bandara', d:'M2 14l8-3V5a2 2 0 0 1 4 0v6l8 3v2l-8-2v4l3 2v1l-5-1-5 1v-1l3-2v-4l-8 2z'},
+  {k:'energi', n:'Energi', d:'M13 2 4 14h7l-1 8 9-12h-7z'},
+  {k:'lainnya', n:'Lainnya', d:'M4 4h16v16H4zM4 12h16M12 4v16'}
+];
+const CAT = Object.fromEntries(CATS.map(c=>[c.k,c]));
+const CONDS = [{k:'baik',n:'Baik',v:'--ok'},{k:'ringan',n:'Rusak ringan',v:'--warn'},{k:'berat',n:'Rusak berat',v:'--bad'},{k:'bangun',n:'Dalam pembangunan',v:'--build'}];
+const COND = Object.fromEntries(CONDS.map(c=>[c.k,c]));
+const STYPES = [
+  {k:'cctv',n:'CCTV',u:'',cam:true},
+  {k:'suhu',n:'Suhu',u:'°C'},
+  {k:'kelembaban',n:'Kelembaban',u:'%RH'},
+  {k:'co2',n:'CO₂',u:'ppm'},
+  {k:'pm25',n:'Partikulat PM2.5',u:'µg/m³'},
+  {k:'getaran',n:'Getaran',u:'mm/s'},
+  {k:'regangan',n:'Regangan struktur',u:'µε'},
+  {k:'airmuka',n:'Tinggi muka air',u:'m'},
+  {k:'tegangan',n:'Tegangan listrik',u:'V'},
+  {k:'lainnya',n:'Lainnya (tentukan sendiri)',u:''}
+];
+const STYPE = Object.fromEntries(STYPES.map(t=>[t.k,t]));
+const SSTAT = {ok:'Normal',alert:'Melewati ambang',offline:'Offline',off:'Nonaktif',nodata:'Belum ada data'};
+const RJENIS = [['kerusakan','Kerusakan fisik'],['sensor','Gangguan sensor / perangkat'],['keamanan','Keamanan'],['lingkungan','Lingkungan'],['layanan','Gangguan layanan'],['lainnya','Lainnya']];
+const PRIO = [['rendah','Rendah'],['sedang','Sedang'],['tinggi','Tinggi'],['kritis','Kritis']];
+const PRANK = {kritis:0,tinggi:1,sedang:2,rendah:3};
+const RSTAT = [['baru','Baru'],['ditangani','Ditangani'],['selesai','Selesai']];
+const MJENIS = [['inspeksi','Inspeksi'],['rutin','Perawatan rutin'],['perbaikan','Perbaikan'],['penggantian','Penggantian komponen'],['kalibrasi','Kalibrasi sensor']];
+const MSTAT = [['terjadwal','Terjadwal'],['selesai','Selesai']];
+const lbl = (arr,k) => (arr.find(x=>x[0]===k)||[k,k||'—'])[1];
+
+/* ================= State ================= */
+const S = { assets:[], sensors:[], reports:[], maint:[], models:[], view:'peta',
+  cats:new Set(), q:'', country:'', cond:'', rf:'open', sf:'', mf:'',
+  sel:null, tab:'info', D:null, pick:false, confirm:null,
+  admin:false, canReport:false, me:null, loaded:false, local:false };
+let db=null, user=null, downloads=null, assetsCap=null;
+const COLS = {assets:'assets', sensors:'sensors', reports:'reports', maint:'maintenance', models:'models'};
+
+/* ================= Helpers ================= */
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function icon(d){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+d+'"/></svg>';}
+function num(v){if(v===''||v==null)return null;const n=parseFloat(String(v).replace(',','.'));return isFinite(n)?n:null;}
+function dms(v,pos,neg){const h=v<0?neg:pos;v=Math.abs(v);const d=Math.floor(v);const mf=(v-d)*60;const m=Math.floor(mf);const s=((mf-m)*60).toFixed(1);return d+'° '+String(m).padStart(2,'0')+'′ '+String(s).padStart(4,'0')+'″ '+h;}
+function fmtCoord(lat,lng){return Number(lat).toFixed(5)+', '+Number(lng).toFixed(5);}
+function fmtTime(iso){if(!iso)return '';const d=new Date(iso);if(isNaN(d))return '';return d.toLocaleString('id-ID',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+function fmtDate(s){if(!s)return '';const d=new Date(s+'T00:00:00');if(isNaN(d))return s;return d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});}
+function ago(iso){if(!iso)return '';const m=(Date.now()-new Date(iso))/60000;if(!isFinite(m))return '';if(m<1)return 'baru saja';if(m<60)return Math.round(m)+' mnt lalu';if(m<1440)return Math.round(m/60)+' jam lalu';if(m<43200)return Math.round(m/1440)+' hari lalu';return fmtTime(iso);}
+function today(){const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);}
+const IDR = new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0});
+function fmtNum(v){const n=num(v);return n==null?'—':n.toLocaleString('id-ID',{maximumFractionDigits:2});}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2800);}
+function reduced(){return window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;}
+function assetById(id){return S.assets.find(a=>a.id===id);}
+function assetName(id){const a=assetById(id);return a?a.nama:'Aset terhapus';}
+function who(uid,fallback){return uid?'<span data-uid="'+esc(uid)+'">Pengguna</span>':esc(fallback||'Sistem');}
+
+/* ================= Derived ================= */
+function sStat(s){
+  if(s.status==='nonaktif')return 'off';
+  if(s.status==='offline')return 'offline';
+  if(STYPE[s.tipe]&&STYPE[s.tipe].cam)return 'ok';
+  const v=num(s.nilai); if(v==null)return 'nodata';
+  const mn=num(s.min), mx=num(s.max);
+  if((mn!=null&&v<mn)||(mx!=null&&v>mx))return 'alert';
+  return 'ok';
+}
+const isOpen = r => r.status!=='selesai';
+const isLate = m => m.status==='terjadwal'&&m.tanggal&&m.tanggal<today();
+function assetHealth(id){
+  const sens=S.sensors.filter(s=>s.assetId===id);
+  const alerts=sens.filter(s=>['alert','offline'].includes(sStat(s))).length;
+  const open=S.reports.filter(r=>r.assetId===id&&isOpen(r));
+  const urgent=open.filter(r=>r.prioritas==='tinggi'||r.prioritas==='kritis').length;
+  const late=S.maint.filter(m=>m.assetId===id&&isLate(m)).length;
+  return {sens:sens.length, alerts, open:open.length, urgent, late, warn:alerts+urgent>0};
+}
+
+/* ================= World geometry ================= */
+function decodeRing(str,off,scale){const out=[];let px=off[0],py=off[1];for(let i=0;i<str.length;i+=2){let x=str.charCodeAt(i)-64,y=str.charCodeAt(i+1)-64;x=(x>>1)^(-(x&1));y=(y>>1)^(-(y&1));x+=px;y+=py;px=x;py=y;out.push([x/scale,y/scale]);}return out;}
+function decodeWorld(geo){
+  if(!geo||!geo.features)return null;
+  if(!geo.UTF8Encoding)return geo;
+  const sc=geo.UTF8Scale||1024;
+  geo.features.forEach(f=>{const g=f.geometry;if(!g)return;const c=g.coordinates,eo=g.encodeOffsets;
+    if(g.type==='Polygon'){for(let i=0;i<c.length;i++)if(typeof c[i]==='string')c[i]=decodeRing(c[i],eo[i],sc);}
+    else if(g.type==='MultiPolygon'){for(let i=0;i<c.length;i++)for(let j=0;j<c[i].length;j++)if(typeof c[i][j]==='string')c[i][j]=decodeRing(c[i][j],eo[i][j],sc);}
+  });
+  geo.UTF8Encoding=false;
+  geo.features.forEach(f=>{if(f)f.type='Feature';});
+  const okRing=r=>Array.isArray(r)&&r.length>=3&&r.every(pt=>Array.isArray(pt)&&isFinite(pt[0])&&isFinite(pt[1])&&Math.abs(pt[1])<=90);
+  geo.features=geo.features.filter(f=>{const g=f&&f.geometry;if(!g||!f.properties||!f.properties.name)return false;
+    if(g.type==='Polygon'){g.coordinates=g.coordinates.filter(okRing);return g.coordinates.length>0;}
+    if(g.type==='MultiPolygon'){g.coordinates=g.coordinates.map(p=>p.filter(okRing)).filter(p=>p.length>0);return g.coordinates.length>0;}
+    return false;});
+  return geo;
+}
+let world=null;try{world=decodeWorld(window.__worldGeo);}catch(e){world=null;}
+const countryNames=world?world.features.map(f=>f.properties&&f.properties.name).filter(Boolean).sort():[];
+function inRing(pt,ring){let x=pt[0],y=pt[1],ins=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const xi=ring[i][0],yi=ring[i][1],xj=ring[j][0],yj=ring[j][1];if(((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi))ins=!ins;}return ins;}
+function inPoly(pt,poly){if(!inRing(pt,poly[0]))return false;for(let h=1;h<poly.length;h++)if(inRing(pt,poly[h]))return false;return true;}
+function countryAt(lat,lng){if(!world)return '';const pt=[lng,lat];for(const f of world.features){const g=f.geometry;if(!g)continue;const polys=g.type==='Polygon'?[g.coordinates]:g.type==='MultiPolygon'?g.coordinates:[];for(const p of polys)if(inPoly(pt,p))return f.properties.name;}return '';}
+
+/* ================= Map ================= */
+function makeStubMap(reason){
+  const layer=()=>{const o={addTo(){return o;},bindTooltip(){return o;},on(){return o;},getBounds(){return null;},clearLayers(){},addLayer(){},getElement(){return null;},bringToFront(){return o;}};return o;};
+  const m={setView(){return m;},setMaxBounds(){},on(){return m;},flyTo(){},flyToBounds(){},getZoom(){return 3;},invalidateSize(){},removeLayer(){},getContainer(){return document.getElementById('map');}};
+  window.L={map:()=>m,polyline:layer,geoJSON:layer,layerGroup:layer,circleMarker:layer,DomEvent:{stop(){}},Util:{wrapNum:v=>v}};
+  document.getElementById('map').innerHTML='<div class="empty"><h3>Peta tidak dapat ditampilkan</h3><p>'+esc(reason)+' Daftar aset tetap bisa dipakai.</p></div>';
+  return m;
+}
+let map, mapFault='';
+if(!window.L){map=makeStubMap('Pustaka peta gagal diunduh.');mapFault='Pustaka peta gagal diunduh.';}
+else{
+  try{
+    map=L.map('map',{zoomControl:true,worldCopyJump:true,minZoom:2,maxZoom:14,attributionControl:false,zoomSnap:.5}).setView([0,115],3.5);
+  }catch(e){mapFault='Peta gagal dibuat: '+(e&&e.message||e);map=makeStubMap(mapFault);}
+}
+try{map.setMaxBounds([[-85,-400],[85,400]]);}catch(e){}
+try{
+  const grat=[];for(let lat=-60;lat<=60;lat+=30)grat.push([[lat,-540],[lat,540]]);for(let lng=-180;lng<=180;lng+=30)grat.push([[-85,lng],[85,lng]]);
+  L.polyline(grat,{className:'grat',interactive:false}).addTo(map);
+}catch(e){}
+const countryPaths={};
+if(world){
+  try{
+    L.geoJSON(world,{style:()=>({className:'country',weight:.6}),onEachFeature:(f,l)=>{countryPaths[f.properties.name]=l;l.on('click',onMapClick);l.bindTooltip(()=>{const n=f.properties.name;const c=S.assets.filter(a=>a.negara===n).length;return esc(n)+(c?' · '+c+' aset':'');},{sticky:true,direction:'top'});}}).addTo(map);
+  }catch(e){mapFault='Batas negara gagal digambar: '+(e&&e.message||e);world=null;}
+}
+const markerLayer=L.layerGroup().addTo(map);
+let pickMarker=null;
+map.on('click',onMapClick);
+map.on('mousemove',e=>{$('#cursor').textContent=fmtCoord(e.latlng.lat,L.Util.wrapNum(e.latlng.lng,[-180,180],true));});
+map.on('zoomend moveend',renderTints);
+
+function onMapClick(e){
+  if(!S.pick||!S.D||S.D.kind!=='assetForm')return;
+  L.DomEvent.stop(e);
+  syncDraft();
+  const lat=+e.latlng.lat.toFixed(6), lng=+L.Util.wrapNum(e.latlng.lng,[-180,180],true).toFixed(6);
+  S.D.draft.lat=lat;S.D.draft.lng=lng;
+  const c=countryAt(lat,lng);if(c)S.D.draft.negara=c;
+  S.pick=false;renderPick();renderDrawer();drawPickMarker();
+}
+function drawPickMarker(){
+  if(pickMarker){map.removeLayer(pickMarker);pickMarker=null;}
+  const d=S.D&&S.D.kind==='assetForm'&&S.D.draft;
+  if(d&&num(d.lat)!=null&&num(d.lng)!=null) pickMarker=L.circleMarker([num(d.lat),num(d.lng)],{radius:13,className:'pick',interactive:false}).addTo(map);
+}
+function renderPick(){$('#pickhint').hidden=!S.pick;map.getContainer().classList.toggle('leaflet-crosshair',S.pick);}
+
+/* ================= Filtering ================= */
+function filteredAssets(){
+  const q=S.q.trim().toLowerCase();
+  return S.assets.filter(a=>(!S.cats.size||S.cats.has(a.kategori))&&(!S.country||a.negara===S.country)&&(!S.cond||a.kondisi===S.cond)&&(!q||[a.nama,a.wilayah,a.pengelola,a.negara,a.keterangan].join(' ').toLowerCase().includes(q)))
+    .sort((a,b)=>String(a.nama).localeCompare(String(b.nama),'id'));
+}
+
+/* ================= Render: shell ================= */
+function safe(fn,label){try{fn();}catch(e){console.error(label,e);showNotice('Kesalahan saat '+label+': '+(e&&e.message||e));}}
+function renderAll(){
+  safe(renderShell,'menampilkan menu');safe(renderSide,'menampilkan daftar aset');safe(renderMarkers,'menggambar titik aset');safe(renderTints,'mewarnai negara');
+  if(S.view!=='peta')renderPane();
+  if(S.D&&!/Form$/.test(S.D.kind)&&!drawerBusy())renderDrawer();
+  hydrateNames();
+}
+function drawerBusy(){const a=document.activeElement,dr=$('#drawer');const n=$('#fm-catatan');return (a&&dr.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))||(n&&n.value.trim()!=='');}
+function renderShell(){
+  $('#app').classList.toggle('full',S.view!=='peta');
+  document.querySelectorAll('.nav [data-view]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.view===S.view)));
+  $('#pane').hidden=S.view==='peta';
+  const alerts=S.sensors.filter(s=>['alert','offline'].includes(sStat(s))).length;
+  const open=S.reports.filter(isOpen).length;
+  const late=S.maint.filter(isLate).length;
+  setBadge('#b-sensor',alerts);setBadge('#b-laporan',open);setBadge('#b-perawatan',late);
+  const r=$('#role');
+  r.hidden=false;
+  if(S.local){if(window.CIS_STANDALONE){r.textContent='';r.hidden=true;}else{r.textContent='Mode lokal';r.className='role';}}
+  else if(S.admin){r.textContent='Admin aset';r.className='role admin';}
+  else if(S.canReport){r.textContent='Pelapor';r.className='role';}
+  else {r.textContent='Pembaca';r.className='role';}
+  $('#btn-add').hidden=!(S.admin&&S.view==='peta');
+  $('#btn-export').hidden=!(downloads||window.CIS_STANDALONE)||!S.assets.length||S.view!=='peta';
+}
+function setBadge(sel,n){const b=$(sel);b.textContent=n;b.classList.toggle('hot',n>0);}
+
+function renderSide(){
+  const rows=filteredAssets();
+  $('#s-total').textContent=S.assets.length;
+  const countries=new Set(S.assets.map(a=>a.negara).filter(Boolean));
+  $('#s-sub').textContent='aset · '+countries.size+' negara · '+S.sensors.length+' sensor'+(rows.length!==S.assets.length?' · '+rows.length+' tampil':'');
+  const alerts=S.sensors.filter(s=>['alert','offline'].includes(sStat(s))).length;
+  const open=S.reports.filter(isOpen).length, late=S.maint.filter(isLate).length;
+  $('#health').innerHTML=
+    '<button type="button" class="hbtn'+(alerts?' hot':'')+'" data-act="go" data-view="sensor" data-f="alert"><b>'+alerts+'</b><span>Peringatan sensor</span></button>'+
+    '<button type="button" class="hbtn'+(open?' hot':'')+'" data-act="go" data-view="laporan"><b>'+open+'</b><span>Laporan terbuka</span></button>'+
+    '<button type="button" class="hbtn'+(late?' hot':'')+'" data-act="go" data-view="perawatan"><b>'+late+'</b><span>Perawatan terlambat</span></button>';
+  const tot=S.assets.length||1;
+  $('#s-condbar').innerHTML=CONDS.map(c=>{const n=S.assets.filter(a=>a.kondisi===c.k).length;return n?'<span style="width:'+(n/tot*100)+'%;background:var('+c.v+')"></span>':'';}).join('');
+  $('#s-condleg').innerHTML=CONDS.map(c=>'<span><i class="dot" style="background:var('+c.v+')"></i>'+c.n+' <b>'+S.assets.filter(a=>a.kondisi===c.k).length+'</b></span>').join('');
+  $('#chips').innerHTML=CATS.map(c=>{const n=S.assets.filter(a=>a.kategori===c.k).length;const on=S.cats.has(c.k);return '<button type="button" class="chip'+(S.cats.size&&!on?' dim':'')+'" data-cat="'+c.k+'" aria-pressed="'+on+'"><i class="dot" style="background:var(--c-'+c.k+');margin:0"></i>'+c.n+' <span class="n">'+n+'</span></button>';}).join('');
+  $('#f-country').innerHTML='<option value="">Semua negara</option>'+[...countries].sort().map(n=>'<option'+(n===S.country?' selected':'')+'>'+esc(n)+'</option>').join('');
+  const list=$('#list');
+  if(!S.loaded)list.innerHTML='<li class="empty"><h3>Memuat registri…</h3><p>Data aset sedang diambil dari penyimpanan.</p></li>';
+  else if(!S.assets.length&&S.local)list.innerHTML='<li class="empty"><h3>Data tersimpan tidak terbaca di sini</h3><p>Tampilan ini tidak terhubung ke penyimpanan registri, jadi aset yang sudah tersimpan tidak muncul. Buka halaman ini dari aplikasi Claude atau claude.ai (bukan dari tab browser terpisah), lalu muat ulang.</p></li>';
+  else if(!S.assets.length)list.innerHTML='<li class="empty"><h3>Belum ada aset</h3><p>'+(S.admin?'Tekan “Tambah aset”, lalu klik lokasinya di peta.':'Admin aset belum menambahkan data.')+'</p>'+(S.admin?'<button class="btn primary" type="button" data-act="add-asset">+ Tambah aset</button>':'')+'</li>';
+  else if(!rows.length)list.innerHTML='<li class="empty"><h3>Tidak ada yang cocok</h3><p>Tidak ada aset yang sesuai dengan filter saat ini.</p><button class="btn" type="button" data-act="reset">Hapus filter</button></li>';
+  else list.innerHTML=rows.map(a=>{
+    const c=CAT[a.kategori]||CAT.lainnya,k=COND[a.kondisi],h=assetHealth(a.id);
+    const flags=[];if(h.alerts)flags.push(h.alerts+' peringatan sensor');if(h.open)flags.push(h.open+' laporan terbuka');if(h.late)flags.push(h.late+' perawatan terlambat');
+    return '<li class="row" data-id="'+esc(a.id)+'" tabindex="0" aria-current="'+(S.sel===a.id)+'"><span class="glyph" style="background:var(--c-'+c.k+')">'+icon(c.d)+'</span><div style="min-width:0"><div class="nm">'+esc(a.nama)+(a.contoh?'<span class="tag-ex">contoh</span>':'')+'</div><div class="meta">'+esc(c.n)+' · '+esc([a.wilayah,a.negara].filter(Boolean).join(', '))+(h.sens?' · '+h.sens+' sensor':'')+(S.models.some(m=>m.assetId===a.id)?'<span class="badge3d">3D</span>':'')+'</div>'+(flags.length?'<div class="flag">'+flags.join(' · ')+'</div>':'<div class="coord">'+fmtCoord(a.lat,a.lng)+'</div>')+'</div>'+(k?'<span class="pill '+k.k+'">'+k.n+'</span>':'<span></span>')+'</li>';
+  }).join('');
+}
+function renderMarkers(){
+  markerLayer.clearLayers();
+  filteredAssets().forEach(a=>{ try{
+    const lat=num(a.lat),lng=num(a.lng);
+    if(lat==null||lng==null||Math.abs(lat)>90||Math.abs(lng)>180)return;
+    a={...a,lat,lng};
+    const h=assetHealth(a.id);
+    if(h.warn)markerLayer.addLayer(L.circleMarker([a.lat,a.lng],{radius:13,className:'ring',interactive:false}));
+    const m=L.circleMarker([a.lat,a.lng],{radius:S.sel===a.id?9:7,className:'mk '+(CAT[a.kategori]?a.kategori:'lainnya')+(S.sel===a.id?' sel':'')});
+    m.bindTooltip(esc(a.nama)+(h.warn?' · perlu perhatian':''),{direction:'top'});
+    m.on('click',e=>{if(S.pick){onMapClick(e);return;}L.DomEvent.stop(e);openAsset(a.id,false);});
+    markerLayer.addLayer(m);
+  }catch(e){console.error('marker',a&&a.id,e);} });
+}
+function renderTints(){
+  const counts={};S.assets.forEach(a=>{if(a.negara)counts[a.negara]=(counts[a.negara]||0)+1;});
+  const max=Math.max(1,...Object.values(counts));
+  Object.entries(countryPaths).forEach(([n,l])=>{const el=l.getElement&&l.getElement();if(!el)return;el.classList.remove('t1','t2','t3','t4');const c=counts[n];if(c)el.classList.add('t'+Math.min(4,Math.ceil(c/max*4)));});
+}
+function renderLegend(){$('#legend').innerHTML=CATS.map(c=>'<span><i class="dot" style="background:var(--c-'+c.k+')"></i>'+c.n+'</span>').join('')+'<span class="al"><i class="ringdot"></i>Perlu perhatian (sensor/laporan)</span>';}
+
+/* ================= Sensor card ================= */
+function spark(s){
+  const h=(s.riwayat||[]).filter(p=>p&&isFinite(p.v));
+  if(h.length<2)return '<div class="spark-empty">Grafik muncul setelah ada 2 pembacaan atau lebih.</div>';
+  const vs=h.map(p=>p.v);let lo=Math.min(...vs),hi=Math.max(...vs);const dlo=lo,dhi=hi;
+  const mn=num(s.min),mx=num(s.max);
+  if(mn!=null)lo=Math.min(lo,mn);if(mx!=null)hi=Math.max(hi,mx);
+  if(hi===lo){hi+=1;lo-=1;}const pad=(hi-lo)*.12;lo-=pad;hi+=pad;
+  const W=300,H=56,x=i=>i/(h.length-1)*W,y=v=>H-(v-lo)/(hi-lo)*H;
+  let band='';
+  if(mn!=null||mx!=null){const top=mx!=null?y(mx):0,bot=mn!=null?y(mn):H;band='<rect class="band" x="0" y="'+top.toFixed(1)+'" width="'+W+'" height="'+Math.max(0,bot-top).toFixed(1)+'"/>';}
+  const pts=h.map((p,i)=>x(i).toFixed(1)+','+y(p.v).toFixed(1)).join(' ');
+  const lx=x(h.length-1).toFixed(1),ly=y(h[h.length-1].v).toFixed(1);
+  const al=sStat(s)==='alert';
+  return '<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="Tren '+h.length+' pembacaan terakhir">'+band+'<polyline class="ln" points="'+pts+'"/><line class="end'+(al?' al':'')+'" x1="'+lx+'" y1="'+ly+'" x2="'+lx+'" y2="'+ly+'"/></svg>'+
+    '<div class="spark-cap"><span>'+esc(fmtTime(h[0].t))+'</span><span>min '+fmtNum(dlo)+' · maks '+fmtNum(dhi)+'</span></div>';
+}
+function sensorCard(s,showAsset){
+  const t=STYPE[s.tipe]||STYPE.lainnya,st=sStat(s);
+  const unit=s.satuan||t.u;
+  let body;
+  if(t.cam){
+    const url=/^https?:\/\//i.test(s.streamUrl||'')?s.streamUrl:'';
+    body='<div class="cam"><b>'+(st==='ok'?'Kamera daring':SSTAT[st])+'</b>'+(url?'<span class="url">'+esc(url)+'</span><a class="linkbtn" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">Buka siaran langsung ↗</a>':'<span class="help">Alamat siaran belum diisi.</span>')+'</div>';
+  } else {
+    const thr=[num(s.min)!=null?'min '+fmtNum(s.min):'',num(s.max)!=null?'maks '+fmtNum(s.max):''].filter(Boolean).join(' · ');
+    body='<div class="reading"><span class="v'+(st==='alert'?' c-bad':'')+'">'+fmtNum(s.nilai)+'</span><span class="u">'+esc(unit)+'</span><span class="t">'+esc(ago(s.waktu))+'</span></div>'+
+      (thr?'<div class="thr">Ambang normal: '+thr+' '+esc(unit)+'</div>':'')+spark(s);
+  }
+  const acts=[];
+  if(S.admin&&!t.cam)acts.push('<button class="btn sm" type="button" data-act="reading" data-id="'+esc(s.id)+'">Catat pembacaan</button>');
+  if(S.admin&&t.cam)acts.push('<button class="btn sm" type="button" data-act="cam-status" data-id="'+esc(s.id)+'">'+(s.status==='offline'?'Tandai daring':'Tandai offline')+'</button>');
+  if(S.canReport&&(st==='alert'||st==='offline'))acts.push('<button class="btn sm" type="button" data-act="report-from-sensor" data-id="'+esc(s.id)+'">Laporkan gangguan</button>');
+  if(S.admin)acts.push('<button class="btn sm" type="button" data-act="edit-sensor" data-id="'+esc(s.id)+'">Ubah</button>');
+  return '<div class="scard'+(st==='alert'||st==='offline'?' alert':'')+'"><div class="top"><div class="ttl"><b>'+esc(s.nama)+(s.contoh?'<span class="tag-ex">contoh</span>':'')+'</b><small>'+esc(t.k==='lainnya'?(s.tipeLain||'Sensor'):t.n)+(s.posisi?' · '+esc(s.posisi):'')+'</small>'+(showAsset?'<div><button class="linkbtn" type="button" data-act="open-asset" data-id="'+esc(s.assetId)+'" data-tab="sensor">'+esc(assetName(s.assetId))+'</button></div>':'')+'</div><span class="pill '+st+'">'+SSTAT[st]+'</span></div>'+body+(acts.length?'<div class="acts">'+acts.join('')+'</div>':'')+'</div>';
+}
+
+/* ================= Rows for reports and maintenance ================= */
+function reportRow(r,showAsset){
+  return '<li class="trow" data-act="open-report" data-id="'+esc(r.id)+'" tabindex="0"><span class="stripe '+esc(isOpen(r)?r.prioritas:'')+'"></span><div style="min-width:0"><div class="nm">'+esc(r.judul)+(r.contoh?'<span class="tag-ex">contoh</span>':'')+'</div><div class="meta">'+(showAsset?esc(assetName(r.assetId))+' · ':'')+esc(lbl(RJENIS,r.jenis))+' · oleh '+who(r.pelapor,r.contoh?'Contoh':'')+'</div></div><div class="right"><span class="pill '+esc(r.status)+'">'+esc(lbl(RSTAT,r.status))+'</span><span class="when">'+esc(lbl(PRIO,r.prioritas))+' · '+esc(ago(r.dibuat))+'</span></div></li>';
+}
+function maintRow(m,showAsset){
+  const late=isLate(m),cls=m.status==='selesai'?'done':late?'late':'plan';
+  return '<li class="trow" data-act="open-maint" data-id="'+esc(m.id)+'" tabindex="0"><span class="stripe '+cls+'"></span><div style="min-width:0"><div class="nm">'+esc(m.judul)+(m.contoh?'<span class="tag-ex">contoh</span>':'')+'</div><div class="meta">'+(showAsset?esc(assetName(m.assetId))+' · ':'')+esc(lbl(MJENIS,m.jenis))+(m.pelaksana?' · '+esc(m.pelaksana):'')+(num(m.biaya)!=null?' · '+IDR.format(num(m.biaya)):'')+'</div></div><div class="right"><span class="pill '+(late?'alert':esc(m.status))+'">'+(late?'Terlambat':esc(lbl(MSTAT,m.status)))+'</span><span class="when">'+esc(fmtDate(m.tanggal))+'</span></div></li>';
+}
+
+/* ================= Render: module panes ================= */
+function renderPane(){
+  const p=$('#pane');
+  if(!S.loaded){p.innerHTML='<div class="pane-in"><div class="empty"><h3>Memuat…</h3></div></div>';return;}
+  if(S.view==='sensor'){
+    const counts={all:S.sensors.length,alert:0,offline:0,ok:0};
+    S.sensors.forEach(s=>{const st=sStat(s);if(st==='alert')counts.alert++;else if(st==='offline')counts.offline++;else if(st==='ok')counts.ok++;});
+    const list=S.sensors.filter(s=>!S.sf||sStat(s)===S.sf).sort((a,b)=>{const r=x=>({alert:0,offline:1,nodata:2,ok:3,off:4})[sStat(x)];return r(a)-r(b)||String(a.nama).localeCompare(String(b.nama),'id');});
+    p.innerHTML='<div class="pane-in"><div class="pane-h"><div><h2>Sensor IoT</h2><p>Pembacaan terakhir dari sensor yang terpasang di setiap aset. Sensor di luar ambang normal ditandai merah.</p></div><span class="grow"></span>'+(S.admin&&S.assets.length?'<button class="btn primary" type="button" data-act="add-sensor">+ Tambah sensor</button>':'')+'</div>'+
+      '<div class="chips">'+[['','Semua',counts.all],['alert','Melewati ambang',counts.alert],['offline','Offline',counts.offline],['ok','Normal',counts.ok]].map(([k,n,c])=>'<button class="chip" type="button" data-act="sf" data-f="'+k+'" aria-pressed="'+(S.sf===k)+'">'+n+' <span class="n">'+c+'</span></button>').join('')+'</div>'+
+      (list.length?'<div class="sgrid">'+list.map(s=>sensorCard(s,true)).join('')+'</div>':'<div class="empty"><h3>'+(S.sensors.length?'Tidak ada sensor dengan status ini':'Belum ada sensor')+'</h3><p>'+(S.sensors.length?'Pilih filter lain.':'Sensor dipasang per aset. Buka aset di peta, lalu tambahkan sensor di tab Sensor.')+'</p></div>')+'</div>';
+  } else if(S.view==='laporan'){
+    const cnt={open:S.reports.filter(isOpen).length};RSTAT.forEach(([k])=>cnt[k]=S.reports.filter(r=>r.status===k).length);
+    const list=S.reports.filter(r=>S.rf==='open'?isOpen(r):S.rf?r.status===S.rf:true).sort((a,b)=>(isOpen(b)-isOpen(a))||(PRANK[a.prioritas]-PRANK[b.prioritas])||String(b.dibuat).localeCompare(String(a.dibuat)));
+    p.innerHTML='<div class="pane-in"><div class="pane-h"><div><h2>Laporan gangguan</h2><p>Laporan kerusakan atau gangguan pada aset. Pelapor mengirim laporan, admin aset menindaklanjuti sampai selesai.</p></div><span class="grow"></span>'+(S.canReport&&S.assets.length?'<button class="btn primary" type="button" data-act="add-report">+ Laporkan gangguan</button>':'')+'</div>'+
+      '<div class="chips">'+[['open','Terbuka',cnt.open],['baru','Baru',cnt.baru],['ditangani','Ditangani',cnt.ditangani],['selesai','Selesai',cnt.selesai],['','Semua',S.reports.length]].map(([k,n,c])=>'<button class="chip" type="button" data-act="rf" data-f="'+k+'" aria-pressed="'+(S.rf===k)+'">'+n+' <span class="n">'+c+'</span></button>').join('')+'</div>'+
+      (list.length?'<div class="card"><ul class="tlist">'+list.map(r=>reportRow(r,true)).join('')+'</ul></div>':'<div class="empty"><h3>Tidak ada laporan di sini</h3><p>'+(S.rf==='open'?'Semua gangguan sudah ditangani.':'Belum ada laporan dengan status ini.')+'</p></div>')+'</div>';
+  } else if(S.view==='perawatan'){
+    const late=S.maint.filter(isLate).sort((a,b)=>String(a.tanggal).localeCompare(String(b.tanggal)));
+    const plan=S.maint.filter(m=>m.status==='terjadwal'&&!isLate(m)).sort((a,b)=>String(a.tanggal).localeCompare(String(b.tanggal)));
+    const done=S.maint.filter(m=>m.status==='selesai').sort((a,b)=>String(b.tanggal).localeCompare(String(a.tanggal)));
+    const cost=done.filter(m=>(m.tanggal||'').slice(0,4)===today().slice(0,4)).reduce((t,m)=>t+(num(m.biaya)||0),0);
+    const sec=(t,arr,e)=>'<p class="sec-title">'+t+' <span class="badge">'+arr.length+'</span></p>'+(arr.length?'<div class="card"><ul class="tlist">'+arr.map(m=>maintRow(m,true)).join('')+'</ul></div>':'<p class="help">'+e+'</p>');
+    p.innerHTML='<div class="pane-in"><div class="pane-h"><div><h2>Perawatan aset</h2><p>Jadwal dan riwayat inspeksi, perawatan, dan perbaikan. Biaya selesai tahun '+today().slice(0,4)+': <b class="mono">'+IDR.format(cost)+'</b></p></div><span class="grow"></span>'+(S.admin&&S.assets.length?'<button class="btn primary" type="button" data-act="add-maint">+ Catat perawatan</button>':'')+'</div>'+
+      sec('Terlambat',late,'Tidak ada perawatan yang terlambat.')+sec('Terjadwal',plan,'Belum ada perawatan terjadwal.')+sec('Riwayat selesai',done,'Belum ada perawatan yang selesai.')+'</div>';
+  }
+}
+
+/* ================= Drawer ================= */
+function head(title,pre){return '<div class="drawer-h">'+(S.D.back?'<button class="x" type="button" data-act="back" aria-label="Kembali">←</button>':'')+'<div class="hwrap">'+(pre||'')+'<h2>'+esc(title)+'</h2></div><button class="x" type="button" data-act="close" aria-label="Tutup">×</button></div>';}
+function kv(k,v,raw){return (v===''||v==null)?'':'<dt>'+k+'</dt><dd>'+(raw?v:esc(v))+'</dd>';}
+function field(f,d){
+  const id='fm-'+f.n,v=d[f.n]==null?'':d[f.n];let c;
+  if(f.t==='select')c='<select class="in" id="'+id+'" name="'+f.n+'">'+f.opts.map(([k,l])=>'<option value="'+esc(k)+'"'+(String(v)===String(k)?' selected':'')+'>'+esc(l)+'</option>').join('')+'</select>';
+  else if(f.t==='textarea')c='<textarea class="in" id="'+id+'" name="'+f.n+'" rows="'+(f.rows||3)+'" placeholder="'+esc(f.ph||'')+'">'+esc(v)+'</textarea>';
+  else c='<input class="in" id="'+id+'" name="'+f.n+'" type="'+(f.t==='date'?'date':'text')+'"'+(f.t==='num'?' inputmode="decimal"':'')+(f.list?' list="'+f.list+'"':'')+' value="'+esc(v)+'" placeholder="'+esc(f.ph||'')+'" autocomplete="off">';
+  return '<div class="fld"><label for="'+id+'">'+f.l+(f.req?' *':'')+'</label>'+c+(f.help?'<span class="help">'+f.help+'</span>':'')+'</div>';
+}
+function fields(list,d){return list.map(x=>Array.isArray(x)?'<div class="two">'+x.map(f=>field(f,d)).join('')+'</div>':typeof x==='string'?x:field(x,d)).join('');}
+function formShell(title,inner,saveLabel,extraFoot){return head(title)+'<form class="fm drawer-b" id="fm" novalidate>'+inner+'<p class="err" id="fm-err" hidden></p></form><div class="drawer-f">'+(extraFoot||'')+'<span class="grow"></span><button class="btn" type="button" data-act="back">Batal</button><button class="btn primary" type="button" data-act="save">'+saveLabel+'</button></div>';}
+function syncDraft(){const f=$('#fm');if(!f||!S.D||!S.D.draft)return;for(const el of f.elements){if(el.name)S.D.draft[el.name]=el.value;}}
+function assetOpts(){return S.assets.slice().sort((a,b)=>String(a.nama).localeCompare(String(b.nama),'id')).map(a=>[a.id,a.nama]);}
+function confirmBox(key,text,sub){return S.confirm===key?'<div class="confirm"><strong>'+text+'</strong><span>'+sub+'</span><div class="acts"><button class="btn danger" type="button" data-act="confirm-yes">Ya, hapus</button><button class="btn" type="button" data-act="confirm-no">Batal</button></div></div>':'';}
+
+function renderDrawer(){
+  const dr=$('#drawer'),D=S.D;
+  if(!D){dr.hidden=true;dr.innerHTML='';return;}
+  let html='';
+  if(D.kind==='asset'){
+    const a=assetById(D.id);
+    if(!a){if(D.fresh){dr.innerHTML=head('Menyimpan…')+'<div class="drawer-b"><p class="help">Memuat data aset…</p></div>';dr.hidden=false;return;}closeDrawer();return;}
+    D.fresh=false;
+    const c=CAT[a.kategori]||CAT.lainnya,k=COND[a.kondisi],h=assetHealth(a.id);
+    const sens=S.sensors.filter(s=>s.assetId===a.id).sort((x,y)=>String(x.nama).localeCompare(String(y.nama),'id'));
+    const reps=S.reports.filter(r=>r.assetId===a.id).sort((x,y)=>(isOpen(y)-isOpen(x))||String(y.dibuat).localeCompare(String(x.dibuat)));
+    const mts=S.maint.filter(m=>m.assetId===a.id).sort((x,y)=>String(y.tanggal).localeCompare(String(x.tanggal)));
+    const mods=S.models.filter(m=>m.assetId===a.id).sort((x,y)=>String(y.diunggah).localeCompare(String(x.diunggah)));
+    const tab=(k2,n,cnt,hot)=>'<button type="button" role="tab" data-act="tab" data-tab="'+k2+'" aria-selected="'+(S.tab===k2)+'">'+n+(cnt!=null?' <span class="badge'+(hot?' hot':'')+'">'+cnt+'</span>':'')+'</button>';
+    html=head(a.nama,'<div class="catline"><i class="dot" style="background:var(--c-'+c.k+');margin:0"></i>'+c.n+(k?' <span class="pill '+k.k+'">'+k.n+'</span>':'')+(a.contoh?'<span class="tag-ex">contoh</span>':'')+'</div>')+
+      '<div class="tabs" role="tablist">'+tab('info','Info')+tab('sensor','Sensor',sens.length,h.alerts>0)+tab('laporan','Laporan',h.open,h.open>0)+tab('perawatan','Perawatan',mts.length,h.late>0)+tab('model','Model 3D',mods.length)+'</div><div class="drawer-b">';
+    let foot='';
+    if(S.tab==='info'){
+      const last=mts.find(m=>m.status==='selesai');
+      html+='<div class="minis"><div class="mini'+(h.alerts?' hot':'')+'"><b>'+h.alerts+'</b><span>peringatan sensor</span></div><div class="mini'+(h.open?' hot':'')+'"><b>'+h.open+'</b><span>laporan terbuka</span></div><div class="mini'+(h.late?' hot':'')+'"><b>'+h.late+'</b><span>perawatan terlambat</span></div></div>'+
+        '<div class="coordbox"><span>'+fmtCoord(a.lat,a.lng)+'</span><span>'+dms(a.lat,'LU','LS')+'  '+dms(a.lng,'BT','BB')+'</span></div>'+
+        '<dl class="kv">'+kv('Negara',a.negara)+kv('Wilayah',a.wilayah)+kv('Pengelola',a.pengelola)+kv('Penanggung jawab',a.pj?who(a.pj):'',true)+kv('Tahun operasi',a.tahun)+kv('Dimensi',a.dimensi)+kv('Perawatan terakhir',last?fmtDate(last.tanggal)+' · '+lbl(MJENIS,last.jenis):'')+kv('Keterangan',a.keterangan)+kv('Diperbarui',fmtTime(a.diperbarui))+'</dl>'+
+        confirmBox('asset','Hapus “'+esc(a.nama)+'”?','Aset beserta '+sens.length+' sensor, '+reps.length+' laporan, '+mts.length+' catatan perawatan, dan '+mods.length+' model 3D-nya akan dihapus untuk semua pengguna.');
+      foot='<button class="btn" type="button" data-act="zoom">Lihat di peta</button>'+(S.admin?'<span class="grow"></span><button class="btn danger" type="button" data-act="del-asset">Hapus</button><button class="btn primary" type="button" data-act="edit-asset">Ubah</button>':'');
+    } else if(S.tab==='sensor'){
+      html+=sens.length?'<div class="stack">'+sens.map(s=>sensorCard(s,false)).join('')+'</div>':'<div class="empty" style="padding:8px 0"><h3>Belum ada sensor</h3><p>Pasang sensor seperti CCTV, suhu, CO₂, atau kelembaban untuk memantau aset ini.</p></div>';
+      if(S.admin)foot='<span class="grow"></span><button class="btn primary" type="button" data-act="add-sensor" data-asset="'+esc(a.id)+'">+ Tambah sensor</button>';
+    } else if(S.tab==='laporan'){
+      html+=reps.length?'<div class="card"><ul class="tlist">'+reps.map(r=>reportRow(r,false)).join('')+'</ul></div>':'<div class="empty" style="padding:8px 0"><h3>Tidak ada laporan</h3><p>Belum ada gangguan yang dilaporkan untuk aset ini.</p></div>';
+      if(S.canReport)foot='<span class="grow"></span><button class="btn primary" type="button" data-act="add-report" data-asset="'+esc(a.id)+'">+ Laporkan gangguan</button>';
+    } else if(S.tab==='model'){
+      html+=modelTab(a,mods);
+      foot='<label class="btn filebtn">Buka IFC dari perangkat<input type="file" accept=".ifc,.IFC" id="ifc-local" aria-label="Buka file IFC dari perangkat"></label>'+(S.admin&&(assetsCap||window.CIS_STANDALONE)?'<span class="grow"></span><label class="btn primary filebtn">+ Unggah IFC<input type="file" accept=".ifc,.IFC" id="ifc-up" data-asset="'+esc(a.id)+'" aria-label="Unggah file IFC"></label>':'');
+    } else {
+      html+=mts.length?'<div class="card"><ul class="tlist">'+mts.map(m=>maintRow(m,false)).join('')+'</ul></div>':'<div class="empty" style="padding:8px 0"><h3>Belum ada catatan perawatan</h3><p>Jadwalkan inspeksi atau catat perawatan yang sudah dilakukan.</p></div>';
+      if(S.admin)foot='<span class="grow"></span><button class="btn primary" type="button" data-act="add-maint" data-asset="'+esc(a.id)+'">+ Catat perawatan</button>';
+    }
+    html+='</div>'+(foot?'<div class="drawer-f">'+foot+'</div>':'');
+  }
+  else if(D.kind==='report'){
+    const r=S.reports.find(x=>x.id===D.id);
+    if(!r){if(D.fresh){dr.innerHTML=head('Laporan terkirim')+'<div class="drawer-b"><p class="help">Memuat laporan…</p></div>';dr.hidden=false;return;}back();return;}
+    D.fresh=false;
+    const s=r.sensorId&&S.sensors.find(x=>x.id===r.sensorId);
+    const steps=(r.tindak||[]).slice().sort((x,y)=>String(x.t).localeCompare(String(y.t)));
+    html=head(r.judul,'<div class="catline"><span class="pill '+esc(r.status)+'">'+esc(lbl(RSTAT,r.status))+'</span><span class="pill '+esc(r.prioritas)+(r.prioritas==='kritis'?' solid':'')+'">Prioritas '+esc(lbl(PRIO,r.prioritas).toLowerCase())+'</span>'+(r.contoh?'<span class="tag-ex">contoh</span>':'')+'</div>')+'<div class="drawer-b">'+
+      '<dl class="kv">'+kv('Aset','<button class="linkbtn" type="button" data-act="open-asset" data-id="'+esc(r.assetId)+'" data-tab="laporan">'+esc(assetName(r.assetId))+'</button>',true)+kv('Jenis',lbl(RJENIS,r.jenis))+(s?kv('Sensor',esc(s.nama)+' · '+fmtNum(r.nilaiSensor)+' '+esc(s.satuan||''),true):'')+kv('Pelapor',who(r.pelapor,r.contoh?'Contoh':''),true)+kv('Dilaporkan',fmtTime(r.dibuat))+kv('Diperbarui',fmtTime(r.diperbarui))+'</dl>'+
+      (r.deskripsi?'<div class="item"><p>'+esc(r.deskripsi).replace(/\n/g,'<br>')+'</p></div>':'')+
+      '<p class="eyebrow">Tindak lanjut</p>'+(steps.length?'<ul class="timeline">'+steps.map(t=>'<li><div class="sub">'+esc(fmtTime(t.t))+' · '+who(t.oleh,'Sistem')+(t.status?' · status → '+esc(lbl(RSTAT,t.status)):'')+'</div>'+(t.catatan?'<p>'+esc(t.catatan)+'</p>':'')+'</li>').join('')+'</ul>':'<p class="help">Belum ada tindak lanjut.</p>')+
+      (S.canReport?'<form class="box" id="fm" novalidate><div class="fld"><label for="fm-catatan">Tambah catatan</label><textarea class="in" id="fm-catatan" name="catatan" rows="2" placeholder="mis. Tim sudah di lokasi, retakan diukur 2 mm"></textarea></div>'+(S.admin?'<div class="fld"><label for="fm-status">Ubah status</label><select class="in" id="fm-status" name="status">'+RSTAT.map(([k,l])=>'<option value="'+k+'"'+(k===r.status?' selected':'')+'>'+l+'</option>').join('')+'</select></div>':'')+'<p class="err" id="fm-err" hidden></p><div class="acts"><button class="btn primary" type="button" data-act="add-step">Simpan tindak lanjut</button></div></form>':'')+
+      confirmBox('report','Hapus laporan ini?','Laporan dan riwayat tindak lanjutnya akan dihapus untuk semua pengguna.')+
+      '</div>'+(S.admin?'<div class="drawer-f"><button class="btn danger" type="button" data-act="del-report">Hapus</button><span class="grow"></span><button class="btn" type="button" data-act="maint-from-report">Catat perawatan</button></div>':'');
+  }
+  else if(D.kind==='assetForm'){
+    const d=D.draft;
+    const pjHtml=user?'<div class="fld"><span class="lbl">Penanggung jawab (admin aset)</span>'+(d.pj?'<div>'+who(d.pj)+' <button class="linkbtn" type="button" data-act="pj-clear">ganti</button></div>':'<input class="in" id="pj-q" placeholder="Cari nama anggota…" autocomplete="off" aria-label="Cari penanggung jawab"><div class="pj-res" id="pj-res"></div>')+'</div>':'';
+    html=formShell(d.id?'Ubah aset':'Aset baru',fields([
+      {n:'nama',l:'Nama aset',req:1,ph:'mis. Jembatan Suramadu'},
+      [{n:'kategori',l:'Kategori',t:'select',opts:CATS.map(c=>[c.k,c.n])},{n:'kondisi',l:'Kondisi',t:'select',opts:CONDS.map(c=>[c.k,c.n])}],
+      '<div class="fld"><span class="lbl">Lokasi *</span><button class="btn" type="button" data-act="pick">'+(S.pick?'Klik di peta…':'◎ Pilih lokasi di peta')+'</button></div>',
+      [{n:'lat',l:'Lintang (lat)',t:'num',ph:'-7.18500'},{n:'lng',l:'Bujur (lng)',t:'num',ph:'112.77900'}],
+      [{n:'negara',l:'Negara',list:'dl-negara',ph:'Terisi otomatis dari peta'},{n:'wilayah',l:'Provinsi / kota'}],
+      '<datalist id="dl-negara">'+countryNames.map(n=>'<option value="'+esc(n)+'">').join('')+'</datalist>',
+      {n:'pengelola',l:'Instansi pengelola',ph:'mis. Kementerian PUPR'},
+      pjHtml,
+      [{n:'tahun',l:'Tahun operasi',t:'num',ph:'2009'},{n:'dimensi',l:'Dimensi',ph:'5,4 km / 12 lantai'}],
+      {n:'keterangan',l:'Keterangan',t:'textarea'}
+    ],d),d.id?'Simpan perubahan':'Simpan aset');
+  }
+  else if(D.kind==='sensorForm'){
+    const d=D.draft,t=STYPE[d.tipe]||STYPE.lainnya;
+    html=formShell(d.id?'Ubah sensor':'Sensor baru',fields([
+      D.fixedAsset?'<div class="fld"><span class="lbl">Aset</span><b>'+esc(assetName(d.assetId))+'</b></div>':{n:'assetId',l:'Aset',t:'select',opts:assetOpts()},
+      {n:'tipe',l:'Jenis sensor',t:'select',opts:STYPES.map(x=>[x.k,x.n])},
+      t.k==='lainnya'?{n:'tipeLain',l:'Nama jenis sensor',req:1,ph:'mis. Kebisingan'}:'',
+      {n:'nama',l:'Nama / kode sensor',req:1,ph:'mis. SUHU-01 Ruang panel'},
+      {n:'posisi',l:'Posisi pemasangan',ph:'mis. Pilar P3, sisi utara'},
+      t.cam?{n:'streamUrl',l:'Alamat siaran (URL)',ph:'https://…',help:'Tautan ke siaran atau NVR. Dibuka di tab baru.'}:
+        [{n:'min',l:'Ambang minimum',t:'num'},{n:'max',l:'Ambang maksimum',t:'num'}],
+      t.cam?'':{n:'satuan',l:'Satuan',ph:t.u||'mis. dB'},
+      {n:'status',l:'Status perangkat',t:'select',opts:[['aktif','Aktif'],['offline','Offline'],['nonaktif','Nonaktif']]}
+    ],d),d.id?'Simpan perubahan':'Pasang sensor',d.id?'<button class="btn danger" type="button" data-act="del-sensor">Hapus</button>':'');
+    if(S.confirm==='sensor')html=html.replace('<p class="err" id="fm-err" hidden></p>',confirmBox('sensor','Hapus sensor ini?','Sensor dan seluruh riwayat pembacaannya akan dihapus.')+'<p class="err" id="fm-err" hidden></p>');
+  }
+  else if(D.kind==='readingForm'){
+    const s=S.sensors.find(x=>x.id===D.id);if(!s){back();return;}
+    const unit=s.satuan||(STYPE[s.tipe]||{}).u||'';
+    html=formShell('Catat pembacaan','<div class="item"><b>'+esc(s.nama)+'</b><span class="sub">'+esc(assetName(s.assetId))+' · terakhir '+fmtNum(s.nilai)+' '+esc(unit)+(s.waktu?' ('+esc(ago(s.waktu))+')':'')+'</span></div>'+
+      fields([{n:'nilai',l:'Nilai'+(unit?' ('+esc(unit)+')':''),t:'num',req:1},{n:'waktu',l:'Waktu pembacaan',ph:'Kosongkan untuk saat ini',help:'Format: 2026-09-29 08:30. Kosongkan untuk waktu sekarang.'}],D.draft),'Simpan pembacaan');
+  }
+  else if(D.kind==='reportForm'){
+    const d=D.draft;
+    html=formShell('Laporkan gangguan',fields([
+      D.fixedAsset?'<div class="fld"><span class="lbl">Aset</span><b>'+esc(assetName(d.assetId))+'</b>'+(d.sensorId?'<span class="help">Dari sensor: '+esc((S.sensors.find(x=>x.id===d.sensorId)||{}).nama||'')+'</span>':'')+'</div>':{n:'assetId',l:'Aset',t:'select',opts:assetOpts()},
+      {n:'judul',l:'Judul singkat',req:1,ph:'mis. Retak pada sambungan ekspansi'},
+      [{n:'jenis',l:'Jenis gangguan',t:'select',opts:RJENIS},{n:'prioritas',l:'Prioritas',t:'select',opts:PRIO}],
+      {n:'deskripsi',l:'Uraian',t:'textarea',rows:5,ph:'Apa yang terjadi, di bagian mana, dan dampaknya.'}
+    ],d),'Kirim laporan');
+  }
+  else if(D.kind==='maintForm'){
+    const d=D.draft;
+    html=formShell(d.id?'Ubah catatan perawatan':'Catat perawatan',fields([
+      D.fixedAsset?'<div class="fld"><span class="lbl">Aset</span><b>'+esc(assetName(d.assetId))+'</b>'+(d.laporanId?'<span class="help">Terkait laporan: '+esc((S.reports.find(r=>r.id===d.laporanId)||{}).judul||'')+'</span>':'')+'</div>':{n:'assetId',l:'Aset',t:'select',opts:assetOpts()},
+      {n:'judul',l:'Pekerjaan',req:1,ph:'mis. Pengecatan ulang rangka baja'},
+      [{n:'jenis',l:'Jenis',t:'select',opts:MJENIS},{n:'status',l:'Status',t:'select',opts:MSTAT}],
+      [{n:'tanggal',l:'Tanggal',t:'date',req:1},{n:'biaya',l:'Biaya (Rp)',t:'num',ph:'mis. 25000000'}],
+      {n:'pelaksana',l:'Pelaksana',ph:'mis. Tim pemeliharaan wilayah'},
+      {n:'catatan',l:'Catatan',t:'textarea'}
+    ],d),d.id?'Simpan perubahan':'Simpan catatan',d.id?'<button class="btn danger" type="button" data-act="del-maint">Hapus</button>':'');
+    if(S.confirm==='maint')html=html.replace('<p class="err" id="fm-err" hidden></p>',confirmBox('maint','Hapus catatan perawatan ini?','Catatan ini akan dihapus untuk semua pengguna.')+'<p class="err" id="fm-err" hidden></p>');
+  }
+  dr.innerHTML=html;dr.hidden=false;
+  hydrateNames();
+}
+
+/* ================= Navigation ================= */
+function setView(v){S.view=v;S.pick=false;renderPick();renderAll();if(v==='peta')setTimeout(()=>{map.invalidateSize();renderTints();},0);}
+function openD(desc){S.confirm=null;S.D=desc;renderDrawer();drawPickMarker();}
+function back(){S.confirm=null;S.pick=false;renderPick();if(S.D&&S.D.back){S.D=S.D.back;renderAll();renderDrawer();drawPickMarker();}else closeDrawer();}
+function closeDrawer(){S.D=null;S.sel=null;S.pick=false;S.confirm=null;renderPick();renderAll();renderDrawer();drawPickMarker();}
+function openAsset(id,fly,tab,fresh){
+  S.sel=id;S.tab=tab||'info';S.pick=false;renderPick();
+  openD({kind:'asset',id,fresh:!!fresh});renderSide();renderMarkers();
+  const a=assetById(id);
+  if(a&&fly&&S.view==='peta')map.flyTo([a.lat,a.lng],Math.max(map.getZoom(),7),{duration:reduced()?0:.8});
+}
+function cur(){return S.D&&S.D.kind==='asset'?S.D:null;}
+function newAssetForm(a){S.pick=!a;renderPick();if(S.view!=='peta')setView('peta');openD({kind:'assetForm',back:cur()||(a?{kind:'asset',id:a.id}:null),draft:a?{...a}:{nama:'',kategori:'bangunan',kondisi:'baik',lat:'',lng:'',negara:'',wilayah:'',pengelola:'',pj:'',tahun:'',dimensi:'',keterangan:''}});}
+
+/* ================= Offline storage (standalone file) ================= */
+const LS_KEY='cis-data-v1';
+function saveLocal(){if(!S.local||!window.CIS_STANDALONE)return;try{localStorage.setItem(LS_KEY,JSON.stringify({assets:S.assets,sensors:S.sensors,reports:S.reports,maint:S.maint,models:S.models}));}catch(e){toast('Browser menolak menyimpan data. Perubahan hanya bertahan sampai halaman ditutup.');}}
+function loadLocal(){try{const d=JSON.parse(localStorage.getItem(LS_KEY)||'null');if(d&&Array.isArray(d.assets)){Object.keys(COLS).forEach(k=>S[k]=d[k]||[]);return true;}}catch(e){}return false;}
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open('cis-files',1);r.onupgradeneeded=()=>r.result.createObjectStore('files');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+async function idbOp(mode,fn){const d=await idb();return new Promise((res,rej)=>{const t=d.transaction('files',mode);const st=t.objectStore('files');const q=fn(st);t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error);});}
+const idbPut=(k,v)=>idbOp('readwrite',st=>st.put(v,k));
+const idbGet=k=>idbOp('readonly',st=>st.get(k));
+const idbDel=k=>idbOp('readwrite',st=>st.delete(k));
+async function dropModelFile(m){if(!m||!m.blobId)return;if(m.blobId.indexOf('idb:')===0){try{await idbDel(m.blobId);}catch(e){}}else if(assetsCap&&m.blobId!=='sample'){try{await assetsCap.delete(m.blobId);}catch(e){}}}
+
+/* ================= Data layer ================= */
+async function put(kind,id,body){
+  if(db){const ref=id?db.collection(COLS[kind]).doc(id):db.collection(COLS[kind]).doc();await ref.set(body);return ref.id;}
+  id=id||kind[0]+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  const arr=S[kind],i=arr.findIndex(x=>x.id===id),rec={id,...body};if(i>=0)arr[i]=rec;else arr.push(rec);saveLocal();renderAll();return id;
+}
+async function patch(kind,id,fields){
+  if(db){await db.collection(COLS[kind]).doc(id).update(fields);return;}
+  const r=S[kind].find(x=>x.id===id);if(r)Object.assign(r,fields);saveLocal();renderAll();
+}
+async function remove(kind,id){
+  if(db){await db.collection(COLS[kind]).doc(id).delete();return;}
+  S[kind]=S[kind].filter(x=>x.id!==id);saveLocal();renderAll();
+}
+function strip(o){const r={...o};delete r.id;return r;}
+function writeErr(e){
+  const c=e&&e.code;
+  if(c==='invalid_argument'||c==='not_granted')return 'Akses Anda tidak mengizinkan perubahan ini. Admin aset butuh akses Editor; pelapor butuh akses Contributor.';
+  if(c==='quota_exceeded')return 'Kapasitas penyimpanan penuh. Hapus data yang tidak diperlukan terlebih dahulu.';
+  return 'Gagal menyimpan. Periksa koneksi lalu coba lagi.';
+}
+function showErr(msg){const el=$('#fm-err');if(el){el.textContent=msg;el.hidden=false;}else toast(msg);}
+async function guarded(btn,fn){if(btn)btn.disabled=true;try{await fn();}catch(e){showErr(writeErr(e));}finally{if(btn&&btn.isConnected)btn.disabled=false;}}
+
+/* ================= Save handlers ================= */
+async function save(btn){
+  syncDraft();const D=S.D,d=D.draft,now=new Date().toISOString();
+  const need=(c,m)=>{if(!c)throw {msgOnly:m};};
+  try{
+    if(D.kind==='assetForm'){
+      const lat=num(d.lat),lng=num(d.lng);
+      need(String(d.nama).trim(),'Isi nama aset.');
+      need(lat!=null&&lat>=-90&&lat<=90,'Lintang harus angka antara -90 dan 90. Klik peta untuk mengisinya otomatis.');
+      need(lng!=null&&lng>=-180&&lng<=180,'Bujur harus angka antara -180 dan 180.');
+      need(!d.tahun||/^\d{4}$/.test(String(d.tahun).trim()),'Tahun operasi ditulis 4 digit, mis. 2009.');
+      const body={...strip(d),nama:String(d.nama).trim(),lat:+lat.toFixed(6),lng:+lng.toFixed(6),negara:String(d.negara||'').trim()||countryAt(lat,lng),diperbarui:now};
+      await guarded(btn,async()=>{const id=await put('assets',d.id,body);toast(d.id?'Perubahan disimpan':'Aset ditambahkan');S.pick=false;renderPick();openAsset(id,false,'info',true);});
+    }
+    else if(D.kind==='sensorForm'){
+      need(d.assetId,'Pilih aset tempat sensor dipasang.');
+      need(String(d.nama).trim(),'Isi nama atau kode sensor.');
+      const t=STYPE[d.tipe]||STYPE.lainnya;
+      if(t.k==='lainnya')need(String(d.tipeLain||'').trim(),'Isi nama jenis sensor.');
+      if(!t.cam){need(d.min===''||num(d.min)!=null,'Ambang minimum harus angka.');need(d.max===''||num(d.max)!=null,'Ambang maksimum harus angka.');if(num(d.min)!=null&&num(d.max)!=null)need(num(d.min)<num(d.max),'Ambang minimum harus lebih kecil dari maksimum.');}
+      if(t.cam&&d.streamUrl)need(/^https?:\/\//i.test(d.streamUrl),'Alamat siaran harus diawali http:// atau https://');
+      const body={...strip(d),nama:String(d.nama).trim(),satuan:t.cam?'':(String(d.satuan||'').trim()||t.u),min:t.cam?null:num(d.min),max:t.cam?null:num(d.max),diperbarui:now};
+      if(!d.id){body.riwayat=[];body.nilai=null;body.waktu=null;body.dibuat=now;}
+      await guarded(btn,async()=>{await put('sensors',d.id,body);toast(d.id?'Sensor diperbarui':'Sensor terpasang');S.tab='sensor';back();});
+    }
+    else if(D.kind==='readingForm'){
+      const v=num(d.nilai);need(v!=null,'Isi nilai berupa angka.');
+      let t=now;if(String(d.waktu||'').trim()){const p=new Date(String(d.waktu).trim().replace(' ','T'));need(!isNaN(p),'Waktu tidak dikenali. Gunakan format 2026-09-29 08:30.');t=p.toISOString();}
+      const s=S.sensors.find(x=>x.id===D.id);
+      const hist=(s.riwayat||[]).concat([{t,v}]).sort((a,b)=>String(a.t).localeCompare(String(b.t))).slice(-60);
+      const latest=hist[hist.length-1];
+      await guarded(btn,async()=>{await patch('sensors',s.id,{riwayat:hist,nilai:latest.v,waktu:latest.t});const st=sStat({...s,nilai:latest.v});toast(st==='alert'?'Tersimpan. Nilai di luar ambang normal.':'Pembacaan tersimpan');back();});
+    }
+    else if(D.kind==='reportForm'){
+      need(d.assetId,'Pilih aset yang mengalami gangguan.');
+      need(String(d.judul).trim(),'Isi judul laporan.');
+      const body={...strip(d),judul:String(d.judul).trim(),status:'baru',pelapor:S.me||null,dibuat:now,diperbarui:now,tindak:[]};
+      await guarded(btn,async()=>{const id=await put('reports',null,body);toast('Laporan terkirim');S.D={kind:'report',id,back:D.back,fresh:true};renderAll();renderDrawer();});
+    }
+    else if(D.kind==='maintForm'){
+      need(d.assetId,'Pilih aset.');need(String(d.judul).trim(),'Isi nama pekerjaan.');
+      need(/^\d{4}-\d{2}-\d{2}$/.test(d.tanggal||''),'Isi tanggal perawatan.');
+      need(d.biaya===''||d.biaya==null||num(d.biaya)!=null,'Biaya harus angka, tanpa titik ribuan.');
+      const body={...strip(d),judul:String(d.judul).trim(),biaya:num(d.biaya),diperbarui:now};
+      if(!d.id)body.dibuat=now;
+      await guarded(btn,async()=>{await put('maint',d.id,body);toast(d.id?'Catatan diperbarui':'Perawatan dicatat');back();});
+    }
+  }catch(e){if(e&&e.msgOnly)showErr(e.msgOnly);else showErr(writeErr(e));}
+}
+async function addStep(btn){
+  const r=S.reports.find(x=>x.id===S.D.id);if(!r)return;
+  const note=($('#fm-catatan')||{}).value||'';const st=$('#fm-status')?$('#fm-status').value:r.status;
+  if(!note.trim()&&st===r.status){showErr('Tulis catatan atau ubah status.');return;}
+  const now=new Date().toISOString();
+  const step={t:now,oleh:S.me||null,catatan:note.trim()};if(st!==r.status)step.status=st;
+  await guarded(btn,async()=>{await patch('reports',r.id,{tindak:(r.tindak||[]).concat([step]),status:st,diperbarui:now});const n=$('#fm-catatan');if(n)n.value='';renderDrawer();toast(st==='selesai'&&r.status!=='selesai'?'Laporan ditutup':'Tindak lanjut disimpan');});
+}
+async function doConfirm(btn){
+  const D=S.D,k=S.confirm;S.confirm=null;
+  await guarded(btn,async()=>{
+    if(k==='asset'){
+      const id=D.id;
+      for(const s of S.sensors.filter(x=>x.assetId===id))await remove('sensors',s.id);
+      for(const m of S.maint.filter(x=>x.assetId===id))await remove('maint',m.id);
+      for(const r of S.reports.filter(x=>x.assetId===id))await remove('reports',r.id);
+      for(const m of S.models.filter(x=>x.assetId===id)){await dropModelFile(m);await remove('models',m.id);}
+      await remove('assets',id);toast('Aset dihapus');closeDrawer();
+    } else if(k&&k.indexOf('model:')===0){const m=S.models.find(x=>x.id===k.slice(6));if(m){await dropModelFile(m);await remove('models',m.id);toast('Model dihapus');}renderDrawer();
+    } else if(k==='sensor'){await remove('sensors',D.draft.id);toast('Sensor dihapus');S.tab='sensor';back();}
+    else if(k==='maint'){await remove('maint',D.draft.id);toast('Catatan dihapus');back();}
+    else if(k==='report'){await remove('reports',D.id);toast('Laporan dihapus');back();}
+  });
+}
+
+async function exportCsv(){
+  if(!downloads&&!window.CIS_STANDALONE)return;
+  const cols=['nama','kategori','kondisi','lat','lng','negara','wilayah','pengelola','tahun','dimensi','sensor','peringatan','laporan_terbuka','keterangan','diperbarui'];
+  const q=v=>{v=v==null?'':String(v);return /[",\n;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  const csv=[cols.join(',')].concat(filteredAssets().map(a=>{const h=assetHealth(a.id);const r={...a,kategori:(CAT[a.kategori]||{}).n,kondisi:(COND[a.kondisi]||{}).n,sensor:h.sens,peringatan:h.alerts,laporan_terbuka:h.open};return cols.map(c=>q(r[c])).join(',');})).join('\n');
+  if(!downloads){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv'}));a.download='aset-infrastruktur.csv';document.body.appendChild(a);a.click();a.remove();toast('File CSV diunduh');return;}
+  try{await downloads.save({filename:'aset-infrastruktur.csv',data:'\ufeff'+csv});toast('File CSV siap diunduh');}
+  catch(e){if(e&&e.code!=='declined')toast('Ekspor gagal. Coba lagi.');}
+}
+
+/* ================= People ================= */
+async function hydrateNames(){
+  if(!user)return;
+  const els=[...document.querySelectorAll('[data-uid]')];if(!els.length)return;
+  const ids=[...new Set(els.map(e=>e.dataset.uid))];
+  try{const ps=await user.profiles(ids);els.forEach(e=>{const p=ps[e.dataset.uid];e.textContent=(p&&p.name)||(p&&p.isMe?'Anda':'Pengguna');});}catch(e){}
+}
+let pjTimer=null;
+async function pjSearch(q){
+  if(!user)return;const box=$('#pj-res');if(!box)return;
+  let hits=[];try{hits=await user.search(q);}catch(e){}
+  box.innerHTML='';
+  hits.slice(0,6).forEach(h=>{const b=document.createElement('button');b.type='button';b.dataset.act='pj-set';b.dataset.uid=h.id;b.textContent=(h.name||'Pengguna')+(h.isMe?' (Anda)':'');box.appendChild(b);});
+  if(!hits.length){const s=document.createElement('span');s.className='help';s.textContent=q?'Tidak ada anggota dengan nama itu.':'Ketik nama untuk mencari.';box.appendChild(s);}
+}
+
+/* ================= 3D models (IFC) ================= */
+const IFC_MAX = 20*1024*1024;
+const IFC_LIBS = [
+  'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js',
+  'https://cdn.jsdelivr.net/npm/web-ifc@0.0.39/web-ifc-api-browser.js'
+];
+const IFC_NAMES = {IFCWALL:'Dinding',IFCWALLSTANDARDCASE:'Dinding',IFCSLAB:'Pelat lantai',IFCBEAM:'Balok',IFCCOLUMN:'Kolom',IFCDOOR:'Pintu',IFCWINDOW:'Jendela',
+  IFCSTAIR:'Tangga',IFCSTAIRFLIGHT:'Anak tangga',IFCROOF:'Atap',IFCRAILING:'Railing',IFCFURNISHINGELEMENT:'Perabot',IFCPLATE:'Pelat',IFCMEMBER:'Rangka',
+  IFCCOVERING:'Penutup',IFCSPACE:'Ruang',IFCBUILDINGELEMENTPROXY:'Elemen lain',IFCFOOTING:'Pondasi',IFCPILE:'Tiang pancang',IFCCURTAINWALL:'Dinding tirai',
+  IFCFLOWSEGMENT:'Pipa / saluran',IFCFLOWTERMINAL:'Terminal utilitas',IFCFLOWFITTING:'Sambungan utilitas',IFCRAMP:'Ramp',IFCRAMPFLIGHT:'Ramp',
+  IFCOPENINGELEMENT:'Bukaan',IFCSITE:'Tapak',IFCBUILDING:'Bangunan',IFCBUILDINGSTOREY:'Lantai',IFCREINFORCINGBAR:'Tulangan',IFCBRIDGE:'Jembatan',IFCROAD:'Jalan'};
+const HIDDEN_BY_DEFAULT = new Set(['IFCSPACE','IFCOPENINGELEMENT']);
+function fmtBytes(n){n=+n||0;return n<1024*1024?(n/1024).toFixed(0)+' KB':(n/1024/1024).toFixed(1).replace('.',',')+' MB';}
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('Pustaka '+src.split('/').pop()+' gagal diunduh.'));document.head.appendChild(s);});}
+let libsP=null, ifcApi=null;
+function loadIfcLibs(){
+  if(!libsP)libsP=(async()=>{for(const u of IFC_LIBS)await loadScript(u);if(!window.WebIFC||!window.THREE||!THREE.OrbitControls)throw new Error('Pustaka 3D tidak lengkap.');})().catch(e=>{libsP=null;throw e;});
+  return libsP;
+}
+async function getIfcApi(){
+  if(ifcApi)return ifcApi;
+  const api=new WebIFC.IfcAPI();
+  api.SetWasmPath(window.CIS_STANDALONE?'https://cdn.jsdelivr.net/npm/web-ifc@0.0.39/':new URL('./',document.baseURI).href,true);
+  try{await api.Init();}catch(e){throw new Error('Mesin pembaca IFC tidak dapat dijalankan di tampilan ini ('+(e&&e.message||e)+').');}
+  ifcApi=api;return api;
+}
+/* Header facts read straight from the STEP text: schema, and IfcSite RefLatitude/RefLongitude. */
+function ifcTextMeta(text){
+  const meta={};
+  const sm=/FILE_SCHEMA\s*\(\s*\(\s*'([^']+)'/i.exec(text.slice(0,20000));if(sm)meta.skema=sm[1].toUpperCase();
+  const site=/=\s*IFCSITE\s*\(([\s\S]*?)\)\s*;/i.exec(text);
+  if(site){
+    const lists=[...site[1].matchAll(/\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)(?:\s*,\s*(-?\d+))?\s*\)/g)];
+    if(lists.length>=2){
+      const dd=m=>(+m[1])+(+m[2])/60+((+m[3])+(+(m[4]||0))/1e6)/3600;
+      const lat=dd(lists[0]),lng=dd(lists[1]);
+      if(isFinite(lat)&&isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180&&!(lat===0&&lng===0)){meta.lat=+lat.toFixed(6);meta.lng=+lng.toFixed(6);}
+    }
+  }
+  return meta;
+}
+function modelTab(a,mods){
+  let h='';
+  if(!mods.length)h+='<div class="empty" style="padding:8px 0"><h3>Belum ada model 3D</h3><p>'+(S.admin&&(assetsCap||window.CIS_STANDALONE)?'Unggah file IFC (maks. 20 MB) dari BIM untuk bangunan, jembatan, atau infrastruktur ini.':'Admin aset belum mengunggah model IFC untuk aset ini.')+' File IFC dari perangkat juga bisa dibuka tanpa disimpan.</p></div>';
+  else h+='<div class="stack">'+mods.map(m=>'<div class="item"><div class="l1"><b>'+esc(m.nama)+'</b>'+(m.skema?'<span class="pill terjadwal">'+esc(m.skema)+'</span>':'')+'</div><span class="sub">'+fmtBytes(m.ukuran)+' · diunggah '+esc(fmtTime(m.diunggah))+(m.oleh?' oleh '+who(m.oleh):'')+(m.lat!=null?' · berkoordinat':'')+'</span>'+
+    confirmBox('model:'+m.id,'Hapus model “'+esc(m.nama)+'”?','File IFC ini akan dihapus dari registri untuk semua pengguna.')+
+    '<div class="acts"><button class="btn sm primary" type="button" data-act="open-model" data-id="'+esc(m.id)+'">Buka 3D</button>'+(S.admin?'<button class="btn sm danger" type="button" data-act="del-model" data-id="'+esc(m.id)+'">Hapus</button>':'')+'</div></div>').join('')+'</div>';
+  h+='<p class="err" id="fm-err" hidden></p><p class="help" id="ifc-progress" hidden></p>';
+  return h;
+}
+async function uploadIfc(file,assetId){
+  const prog=$('#ifc-progress'),say=t=>{if(prog){prog.textContent=t;prog.hidden=!t;}};
+  if(!assetsCap&&!window.CIS_STANDALONE){showErr('Unggah file tidak tersedia di tampilan ini.');return;}
+  if(!/\.ifc$/i.test(file.name)){showErr('Pilih file berakhiran .ifc.');return;}
+  if(file.size>IFC_MAX){showErr('Ukuran file maksimal 20 MB. File ini '+fmtBytes(file.size)+'. Kecilkan model (mis. ekspor per lantai atau per disiplin) lalu coba lagi.');return;}
+  say('Memeriksa file…');
+  const bytes=new Uint8Array(await file.arrayBuffer());
+  if(!/ISO-10303-21/.test(new TextDecoder().decode(bytes.slice(0,200)))){say('');showErr('File ini bukan IFC berformat STEP (.ifc). File .ifcxml atau .ifczip belum didukung.');return;}
+  let text,blob=file,converted=false;
+  try{text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch(e){text=new TextDecoder('windows-1252').decode(bytes);blob=new Blob([text],{type:'text/plain'});converted=true;}
+  const meta=ifcTextMeta(text);
+  say('Mengunggah '+fmtBytes(file.size)+'…');
+  try{
+    const up=assetsCap?await assetsCap.upload(blob,{type:'text/plain'}):await (async()=>{const k='idb:'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);await idbPut(k,blob);return {id:k,url:'',sizeBytes:blob.size};})();
+    const body={assetId,nama:file.name,blobId:up.id,url:up.url,ukuran:up.sizeBytes||file.size,skema:meta.skema||'',diunggah:new Date().toISOString(),oleh:S.me||null};
+    if(meta.lat!=null){body.lat=meta.lat;body.lng=meta.lng;}
+    await put('models',null,body);
+    say('');toast(converted?'Model diunggah (karakter teks diubah ke UTF-8)':'Model 3D diunggah');
+  }catch(e){
+    say('');const c=e&&e.code;
+    showErr(c==='too_large'?'File terlalu besar untuk disimpan. Maksimal 20 MB.':c==='unsupported_type'?'Penyimpanan menolak file ini. Pastikan file IFC berupa teks STEP biasa.':c==='quota_or_state'?'Kuota penyimpanan file sudah penuh. Hapus model lama terlebih dahulu.':writeErr(e));
+  }
+}
+
+const V={};
+function vStatus(title,sub,isErr){const st=$('#vstatus');if(!st)return;st.hidden=!title;st.innerHTML=title?'<div><b>'+esc(title)+'</b>'+(sub?'<span'+(isErr?' class="c-bad"':'')+'>'+esc(sub)+'</span>':'')+'</div>':'';}
+async function openViewer(opt){
+  closeViewer();
+  V.opt=opt;V.token={};const token=V.token;
+  const el=$('#viewer');el.hidden=false;document.documentElement.style.overflow='hidden';
+  el.innerHTML='<div class="viewer-h"><div class="hwrap"><span class="eyebrow">'+esc(opt.sub||'Model 3D')+'</span><h2>'+esc(opt.title)+'</h2></div><button class="btn" type="button" data-act="v-fit">Pas ke layar</button><button class="x" type="button" data-act="v-close" aria-label="Tutup penampil">×</button></div>'+
+    '<div class="viewer-b"><div class="stage" id="stage"><div class="vstatus" id="vstatus"></div></div><div class="vside" id="vside"><p class="help">Informasi model muncul setelah dimuat.</p></div></div>';
+  try{
+    vStatus('Memuat penampil 3D…','Pertama kali bisa memakan waktu beberapa detik.');
+    await loadIfcLibs();if(V.token!==token)return;
+    vStatus('Menyiapkan mesin IFC…');const api=await getIfcApi();if(V.token!==token)return;
+    vStatus('Mengambil model…');const buf=new Uint8Array(await opt.getBuffer());if(V.token!==token)return;
+    vStatus('Membaca geometri…','Model besar bisa butuh waktu lebih lama.');await new Promise(r=>setTimeout(r,40));
+    buildScene(api,buf);
+  }catch(e){if(V.token===token)vStatus('Model tidak dapat ditampilkan',(e&&e.message)||String(e),true);}
+}
+function buildScene(api,buf){
+  const text=new TextDecoder('windows-1252').decode(buf);
+  V.meta=Object.assign(ifcTextMeta(text),V.opt.meta||{});
+  const modelID=api.OpenModel(buf);V.api=api;V.modelID=modelID;
+  const stage=$('#stage');
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(45,1,0.05,50000);
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+  stage.appendChild(renderer.domElement);
+  scene.add(new THREE.HemisphereLight(0xffffff,0x5f6f78,0.95));
+  const dl=new THREE.DirectionalLight(0xffffff,0.55);dl.position.set(1,2,1.4);scene.add(dl);
+  const group=new THREE.Group();scene.add(group);
+  const mats=new Map(),byType=new Map(),byEid=new Map();
+  api.StreamAllMeshes(modelID,m=>{
+    const eid=m.expressID;let tname='LAINNYA';
+    try{tname=api.GetNameFromTypeCode(api.GetLineType(modelID,eid))||tname;}catch(e){}
+    const pgs=m.geometries;
+    for(let i=0;i<pgs.size();i++){
+      const p=pgs.get(i),g=api.GetGeometry(modelID,p.geometryExpressID);
+      const v=api.GetVertexArray(g.GetVertexData(),g.GetVertexDataSize());
+      const ix=api.GetIndexArray(g.GetIndexData(),g.GetIndexDataSize());
+      if(!v.length||!ix.length)continue;
+      const n=v.length/6,pos=new Float32Array(n*3),nor=new Float32Array(n*3);
+      for(let k=0,j=0;k<v.length;k+=6,j+=3){pos[j]=v[k];pos[j+1]=v[k+1];pos[j+2]=v[k+2];nor[j]=v[k+3];nor[j+1]=v[k+4];nor[j+2]=v[k+5];}
+      const geo=new THREE.BufferGeometry();
+      geo.setAttribute('position',new THREE.BufferAttribute(pos,3));geo.setAttribute('normal',new THREE.BufferAttribute(nor,3));
+      geo.setIndex(new THREE.BufferAttribute(new Uint32Array(ix),1));
+      const c=p.color,key=[c.x,c.y,c.z,c.w].map(x=>(+x).toFixed(3)).join();
+      let mat=mats.get(key);
+      if(!mat){mat=new THREE.MeshLambertMaterial({color:new THREE.Color(c.x,c.y,c.z),transparent:c.w<1,opacity:c.w,side:THREE.DoubleSide,depthWrite:c.w>=1});mats.set(key,mat);}
+      const mesh=new THREE.Mesh(geo,mat);
+      mesh.applyMatrix4(new THREE.Matrix4().fromArray(p.flatTransformation));
+      mesh.userData={eid,tname,base:mat};
+      mesh.visible=!HIDDEN_BY_DEFAULT.has(tname);
+      group.add(mesh);
+      if(!byType.has(tname))byType.set(tname,[]);byType.get(tname).push(mesh);
+      if(!byEid.has(eid))byEid.set(eid,[]);byEid.get(eid).push(mesh);
+    }
+  });
+  if(!group.children.length){vStatus('Model tidak berisi geometri','File terbaca, tetapi tidak ada elemen 3D yang bisa digambar.',true);api.CloseModel(modelID);V.modelID=null;return;}
+  const controls=new THREE.OrbitControls(cam,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.12;
+  const hl=new THREE.MeshLambertMaterial({color:new THREE.Color(cssVar('--accent')||'#0f6d6a'),emissive:new THREE.Color(cssVar('--accent')||'#0f6d6a'),emissiveIntensity:.35,side:THREE.DoubleSide});
+  Object.assign(V,{scene,cam,renderer,controls,group,byType,byEid,hl,sel:null});
+  const resize=()=>{const w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();};
+  V.ro=new ResizeObserver(resize);V.ro.observe(stage);resize();
+  fitView();
+  const loop=()=>{if(!V.renderer)return;controls.update();renderer.render(scene,cam);V.raf=requestAnimationFrame(loop);};loop();
+  // picking: a click without dragging selects the element under the pointer
+  const ray=new THREE.Raycaster();let down=null;
+  renderer.domElement.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];});
+  renderer.domElement.addEventListener('pointerup',e=>{
+    if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;down=null;
+    const r=renderer.domElement.getBoundingClientRect();
+    ray.setFromCamera({x:((e.clientX-r.left)/r.width)*2-1,y:-((e.clientY-r.top)/r.height)*2+1},cam);
+    const hit=ray.intersectObjects(group.children.filter(o=>o.visible),false)[0];
+    selectElement(hit?hit.object.userData.eid:null);
+  });
+  vStatus('');
+  const hint=document.createElement('div');hint.className='vhint';hint.textContent='Seret untuk memutar · cubit/scroll untuk zoom · ketuk elemen untuk detail';stage.appendChild(hint);
+  renderVSide();
+}
+function cssVar(n){try{return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}catch(e){return '';}}
+function fitView(){
+  if(!V.group)return;
+  const vis=new THREE.Box3();V.group.children.forEach(o=>{if(o.visible)vis.expandByObject(o);});
+  const box=vis.isEmpty()?new THREE.Box3().setFromObject(V.group):vis;
+  const size=box.getSize(new THREE.Vector3()),ctr=box.getCenter(new THREE.Vector3());
+  const r=Math.max(size.x,size.y,size.z)||10,d=r*1.35;
+  V.cam.near=Math.max(0.01,r/1000);V.cam.far=r*100;V.cam.updateProjectionMatrix();
+  V.cam.position.set(ctr.x+d*.8,ctr.y+d*.6,ctr.z+d*.8);V.controls.target.copy(ctr);V.controls.update();
+}
+function selectElement(eid){
+  if(V.sel!=null&&V.byEid.has(V.sel))V.byEid.get(V.sel).forEach(m=>m.material=m.userData.base);
+  V.sel=eid;
+  if(eid!=null&&V.byEid.has(eid))V.byEid.get(eid).forEach(m=>m.material=V.hl);
+  renderVSide();
+}
+function ifcVal(x){if(x==null)return '';if(typeof x!=='object')return String(x);if('value' in x)return ifcVal(x.value);if(Array.isArray(x))return x.map(ifcVal).join(', ');return '';}
+function psetsFor(eid){
+  const api=V.api,id=V.modelID;
+  if(!V.psetIndex){
+    V.psetIndex=new Map();
+    try{const rels=api.GetLineIDsWithType(id,WebIFC.IFCRELDEFINESBYPROPERTIES);
+      for(let i=0;i<rels.size();i++){const r=api.GetLine(id,rels.get(i));const pd=r.RelatingPropertyDefinition&&r.RelatingPropertyDefinition.value;(r.RelatedObjects||[]).forEach(o=>{const k=o&&o.value;if(k==null||pd==null)return;if(!V.psetIndex.has(k))V.psetIndex.set(k,[]);V.psetIndex.get(k).push(pd);});}
+    }catch(e){}
+  }
+  const out=[];
+  (V.psetIndex.get(eid)||[]).slice(0,12).forEach(pid=>{
+    try{const ps=api.GetLine(id,pid);const props=[];
+      (ps.HasProperties||[]).slice(0,40).forEach(h=>{try{const pr=api.GetLine(id,h.value);props.push([ifcVal(pr.Name),ifcVal(pr.NominalValue)]);}catch(e){}});
+      (ps.Quantities||[]).slice(0,40).forEach(h=>{try{const q=api.GetLine(id,h.value);const val=['LengthValue','AreaValue','VolumeValue','CountValue','WeightValue'].map(k=>q[k]).find(v=>v!=null);props.push([ifcVal(q.Name),val!=null?fmtNum(ifcVal(val)):'']);}catch(e){}});
+      if(props.length)out.push({name:ifcVal(ps.Name)||'Properti',props});
+    }catch(e){}
+  });
+  return out;
+}
+function renderVSide(){
+  const side=$('#vside');if(!side||!V.api)return;
+  const api=V.api,id=V.modelID,meta=V.meta||{},opt=V.opt;
+  let proj='';try{const pr=api.GetLineIDsWithType(id,WebIFC.IFCPROJECT);if(pr.size())proj=ifcVal(api.GetLine(id,pr.get(0)).Name);}catch(e){}
+  let storeys=0;try{storeys=api.GetLineIDsWithType(id,WebIFC.IFCBUILDINGSTOREY).size();}catch(e){}
+  let h='<div class="vsec"><p class="eyebrow">Model</p><dl class="kv">'+kv('File',opt.fileName)+kv('Skema',meta.skema)+kv('Proyek',proj)+kv('Lantai',storeys||'')+kv('Elemen',V.byEid.size.toLocaleString('id-ID'))+(opt.size?kv('Ukuran',fmtBytes(opt.size)):'')+'</dl></div>';
+  if(meta.lat!=null){
+    const a=opt.assetId&&assetById(opt.assetId);
+    const dist=a?Math.hypot((a.lat-meta.lat)*111,(a.lng-meta.lng)*111*Math.cos(meta.lat*Math.PI/180)):null;
+    h+='<div class="vsec"><p class="eyebrow">Georeferensi IFC</p><div class="coordbox"><span>'+fmtCoord(meta.lat,meta.lng)+'</span><span>'+dms(meta.lat,'LU','LS')+'  '+dms(meta.lng,'BT','BB')+'</span></div>'+
+      (dist!=null?'<span class="help">'+(dist<0.05?'Sesuai dengan lokasi aset di peta.':'Berjarak sekitar '+fmtNum(dist)+' km dari titik aset di peta.')+'</span>':'')+
+      (a&&S.admin&&dist>=0.05?'<div class="acts"><button class="btn sm" type="button" data-act="v-useloc">Pakai sebagai lokasi aset</button></div>':'')+'</div>';
+  }
+  if(V.sel!=null){
+    let ln=null;try{ln=api.GetLine(id,V.sel);}catch(e){}
+    const tn=(V.byEid.get(V.sel)||[{userData:{}}])[0].userData.tname||'';
+    h+='<div class="vsec"><p class="eyebrow">Elemen terpilih</p><dl class="kv">'+kv('Jenis',(IFC_NAMES[tn]?IFC_NAMES[tn]+' ':'')+'<code>'+esc(tn)+'</code>',true)+(ln?kv('Nama',ifcVal(ln.Name))+kv('Tipe objek',ifcVal(ln.ObjectType))+kv('Tag',ifcVal(ln.Tag))+kv('Deskripsi',ifcVal(ln.Description))+kv('GlobalId','<code>'+esc(ifcVal(ln.GlobalId))+'</code>',true):'')+'</dl>'+
+      psetsFor(V.sel).map((ps,i)=>'<details class="pset"'+(i===0?' open':'')+'><summary>'+esc(ps.name)+'</summary><dl>'+ps.props.map(([k,v])=>'<dt>'+esc(k)+'</dt><dd>'+esc(v||'—')+'</dd>').join('')+'</dl></details>').join('')+
+      '<div class="acts">'+(opt.assetId&&S.canReport?'<button class="btn sm" type="button" data-act="v-report">Laporkan gangguan elemen ini</button>':'')+'<button class="btn sm" type="button" data-act="v-unsel">Batal pilih</button></div></div>';
+  } else h+='<p class="help">Ketuk elemen pada model untuk melihat jenis, nama, GlobalId, dan properti IFC-nya.</p>';
+  const types=[...V.byType.entries()].map(([k,ms])=>[k,new Set(ms.map(m=>m.userData.eid)).size,ms[0].visible]).sort((a,b)=>b[1]-a[1]);
+  h+='<div class="vsec"><p class="eyebrow">Tampilkan elemen</p><div class="typelist">'+types.map(([k,n,on])=>'<label><input type="checkbox" class="vtype" data-t="'+esc(k)+'"'+(on?' checked':'')+'> '+esc(IFC_NAMES[k]||k)+' <code>'+esc(k)+'</code><span class="n">'+n+'</span></label>').join('')+'</div></div>';
+  side.innerHTML=h;hydrateNames();
+}
+function closeViewer(){
+  V.token=null;
+  if(V.raf)cancelAnimationFrame(V.raf);
+  if(V.ro)V.ro.disconnect();
+  if(V.group)V.group.traverse(o=>{if(o.geometry)o.geometry.dispose();});
+  if(V.renderer){try{V.renderer.dispose();V.renderer.forceContextLoss&&V.renderer.forceContextLoss();}catch(e){}}
+  if(V.api&&V.modelID!=null){try{V.api.CloseModel(V.modelID);}catch(e){}}
+  for(const k of Object.keys(V))delete V[k];
+  const el=$('#viewer');if(el){el.hidden=true;el.innerHTML='';}
+  document.documentElement.style.overflow='';
+}
+function openStoredModel(m){
+  const a=assetById(m.assetId);
+  openViewer({title:m.nama,sub:a?a.nama:'Model 3D',fileName:m.nama,size:m.ukuran,assetId:m.assetId,meta:m.lat!=null?{lat:m.lat,lng:m.lng,skema:m.skema}:{skema:m.skema},
+    getBuffer:async()=>{if(m.blobId==='sample'){const t=document.getElementById('sample-ifc');if(!t)throw new Error('File contoh tidak tersedia.');return new TextEncoder().encode(t.textContent.replace(/^\s+/,'')).buffer;}
+      if(String(m.blobId).indexOf('idb:')===0){const b=await idbGet(m.blobId);if(!b)throw new Error('File model tidak ditemukan di browser ini.');return b.arrayBuffer();}
+      const r=await fetch(m.url||('/_blob/'+m.blobId));if(!r.ok)throw new Error('File model tidak dapat diambil (kode '+r.status+').');return r.arrayBuffer();}});
+}
+function openLocalModel(file,assetId){
+  if(!/\.ifc$/i.test(file.name)){toast('Pilih file berakhiran .ifc.');return;}
+  const a=assetId&&assetById(assetId);
+  openViewer({title:file.name,sub:(a?a.nama+' · ':'')+'Pratinjau, tidak disimpan',fileName:file.name,size:file.size,assetId,getBuffer:()=>file.arrayBuffer()});
+}
+
+/* ================= Events ================= */
+document.addEventListener('click',e=>{
+  const chip=e.target.closest('.chip[data-cat]');
+  if(chip){const k=chip.dataset.cat;S.cats.has(k)?S.cats.delete(k):S.cats.add(k);renderSide();renderMarkers();return;}
+  const nav=e.target.closest('.nav [data-view]');if(nav){setView(nav.dataset.view);return;}
+  const row=e.target.closest('.row[data-id]');if(row){openAsset(row.dataset.id,true);return;}
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const act=b.dataset.act,id=b.dataset.id;
+  switch(act){
+    case 'close':closeDrawer();break;
+    case 'back':back();break;
+    case 'go':if(b.dataset.f)S.sf=b.dataset.f;setView(b.dataset.view);break;
+    case 'sf':S.sf=b.dataset.f;renderPane();break;
+    case 'rf':S.rf=b.dataset.f;renderPane();hydrateNames();break;
+    case 'reset':S.cats.clear();S.q='';S.country='';S.cond='';$('#f-q').value='';$('#f-cond').value='';renderSide();renderMarkers();break;
+    case 'tab':S.tab=b.dataset.tab;S.confirm=null;renderDrawer();break;
+    case 'zoom':{const a=assetById(S.D.id);if(a){if(S.view!=='peta')setView('peta');map.flyTo([a.lat,a.lng],12,{duration:reduced()?0:.8});}break;}
+    case 'open-asset':openAsset(id,S.view==='peta',b.dataset.tab);break;
+    case 'add-asset':newAssetForm(null);break;
+    case 'edit-asset':newAssetForm(assetById(S.D.id));break;
+    case 'del-asset':S.confirm='asset';renderDrawer();break;
+    case 'pick':syncDraft();S.pick=!S.pick;renderPick();renderDrawer();break;
+    case 'pj-set':syncDraft();S.D.draft.pj=b.dataset.uid;renderDrawer();break;
+    case 'pj-clear':syncDraft();S.D.draft.pj='';renderDrawer();setTimeout(()=>{const i=$('#pj-q');if(i){i.focus();pjSearch('');}},0);break;
+    case 'add-sensor':{const aid=b.dataset.asset||(cur()&&cur().id)||'';openD({kind:'sensorForm',fixedAsset:!!b.dataset.asset,back:cur(),draft:{assetId:aid||(S.assets[0]||{}).id||'',tipe:'suhu',tipeLain:'',nama:'',posisi:'',min:'',max:'',satuan:'',streamUrl:'',status:'aktif'}});break;}
+    case 'edit-sensor':{const s=S.sensors.find(x=>x.id===id);if(s)openD({kind:'sensorForm',fixedAsset:true,back:cur(),draft:{...s,min:s.min==null?'':s.min,max:s.max==null?'':s.max}});break;}
+    case 'del-sensor':syncDraft();S.confirm='sensor';renderDrawer();break;
+    case 'reading':openD({kind:'readingForm',id,back:cur(),draft:{nilai:'',waktu:''}});break;
+    case 'cam-status':{const s=S.sensors.find(x=>x.id===id);if(s)guarded(b,async()=>{await patch('sensors',s.id,{status:s.status==='offline'?'aktif':'offline',waktu:new Date().toISOString()});toast('Status kamera diperbarui');});break;}
+    case 'add-report':{const aid=b.dataset.asset||'';openD({kind:'reportForm',fixedAsset:!!aid,back:cur(),draft:{assetId:aid||(S.assets[0]||{}).id||'',judul:'',jenis:'kerusakan',prioritas:'sedang',deskripsi:''}});break;}
+    case 'report-from-sensor':{const s=S.sensors.find(x=>x.id===id);if(!s)break;const st=sStat(s),unit=s.satuan||(STYPE[s.tipe]||{}).u||'';
+      openD({kind:'reportForm',fixedAsset:true,back:cur(),draft:{assetId:s.assetId,sensorId:s.id,nilaiSensor:num(s.nilai),judul:st==='offline'?s.nama+' offline':s.nama+' di luar ambang normal',jenis:st==='offline'?'sensor':'lingkungan',prioritas:'tinggi',deskripsi:st==='offline'?'Perangkat tidak mengirim data.':'Pembacaan '+fmtNum(s.nilai)+' '+unit+' pada '+fmtTime(s.waktu)+'. Ambang normal: '+(num(s.min)!=null?fmtNum(s.min):'—')+' sampai '+(num(s.max)!=null?fmtNum(s.max):'—')+' '+unit+'.'}});break;}
+    case 'open-report':openD({kind:'report',id,back:cur()});break;
+    case 'add-step':addStep(b);break;
+    case 'del-report':S.confirm='report';renderDrawer();break;
+    case 'maint-from-report':{const r=S.reports.find(x=>x.id===S.D.id);if(r)openD({kind:'maintForm',fixedAsset:true,back:S.D,draft:{assetId:r.assetId,laporanId:r.id,judul:'Perbaikan: '+r.judul,jenis:'perbaikan',status:'terjadwal',tanggal:today(),biaya:'',pelaksana:'',catatan:''}});break;}
+    case 'add-maint':{const aid=b.dataset.asset||'';openD({kind:'maintForm',fixedAsset:!!aid,back:cur(),draft:{assetId:aid||(S.assets[0]||{}).id||'',judul:'',jenis:'inspeksi',status:'terjadwal',tanggal:today(),biaya:'',pelaksana:'',catatan:''}});break;}
+    case 'open-maint':{const m=S.maint.find(x=>x.id===id);if(!m)break;if(S.admin)openD({kind:'maintForm',fixedAsset:true,back:cur(),draft:{...m,biaya:m.biaya==null?'':m.biaya}});else toast(m.judul+' · '+fmtDate(m.tanggal));break;}
+    case 'del-maint':syncDraft();S.confirm='maint';renderDrawer();break;
+    case 'open-model':{const m=S.models.find(x=>x.id===id);if(m)openStoredModel(m);break;}
+    case 'del-model':S.confirm='model:'+id;renderDrawer();break;
+    case 'v-close':closeViewer();break;
+    case 'v-fit':fitView();break;
+    case 'v-unsel':selectElement(null);break;
+    case 'v-useloc':{const aid=V.opt&&V.opt.assetId,mt=V.meta;if(aid&&mt&&mt.lat!=null)guarded(b,async()=>{await patch('assets',aid,{lat:mt.lat,lng:mt.lng,negara:countryAt(mt.lat,mt.lng)||(assetById(aid)||{}).negara||'',diperbarui:new Date().toISOString()});toast('Lokasi aset diperbarui dari IFC');renderVSide();});break;}
+    case 'v-report':{const aid=V.opt&&V.opt.assetId;if(!aid||V.sel==null)break;let ln=null;try{ln=V.api.GetLine(V.modelID,V.sel);}catch(e){}
+      const tn=(V.byEid.get(V.sel)||[{userData:{}}])[0].userData.tname||'';const nm=ln?ifcVal(ln.Name):'';const gid=ln?ifcVal(ln.GlobalId):'';
+      const fname=V.opt?V.opt.fileName:'';closeViewer();if(!S.D||S.D.kind!=='asset'||S.D.id!==aid)openAsset(aid,false,'model');
+      openD({kind:'reportForm',fixedAsset:true,back:cur(),draft:{assetId:aid,judul:'Gangguan pada '+((IFC_NAMES[tn]||tn||'elemen').toLowerCase())+(nm?' '+nm:''),jenis:'kerusakan',prioritas:'sedang',deskripsi:'Elemen model IFC: '+(IFC_NAMES[tn]||tn)+(nm?' "'+nm+'"':'')+(gid?'\nGlobalId: '+gid:'')+'\nFile: '+fname+'\n\nUraian: '}});break;}
+    case 'confirm-no':S.confirm=null;renderDrawer();break;
+    case 'confirm-yes':doConfirm(b);break;
+    case 'save':save(b);break;
+  }
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target.matches&&e.target.matches('.row[data-id],.trow')){e.target.click();}
+  if(e.key==='Escape'&&!$('#viewer').hidden){closeViewer();return;}
+  if(e.key==='Escape'){if(S.pick){S.pick=false;renderPick();renderDrawer();}else if(S.D&&!/Form$/.test(S.D.kind))closeDrawer();}
+});
+document.addEventListener('input',e=>{
+  if(e.target.id==='f-q'){S.q=e.target.value;renderSide();renderMarkers();}
+  if(e.target.id==='fm-lat'||e.target.id==='fm-lng'){syncDraft();drawPickMarker();}
+  if(e.target.id==='pj-q'){clearTimeout(pjTimer);const v=e.target.value;pjTimer=setTimeout(()=>pjSearch(v),250);}
+});
+document.addEventListener('focusin',e=>{if(e.target.id==='pj-q'&&!$('#pj-res').childElementCount)pjSearch('');});
+document.addEventListener('change',e=>{
+  if(e.target.id==='f-country'){S.country=e.target.value;renderSide();renderMarkers();const l=countryPaths[S.country];if(l)map.flyToBounds(l.getBounds(),{padding:[30,30],maxZoom:6,duration:reduced()?0:.8});}
+  if(e.target.id==='f-cond'){S.cond=e.target.value;renderSide();renderMarkers();}
+  if(e.target.id==='ifc-up'&&e.target.files&&e.target.files[0]){const f=e.target.files[0],aid=e.target.dataset.asset;e.target.value='';uploadIfc(f,aid);}
+  if(e.target.id==='ifc-local'&&e.target.files&&e.target.files[0]){const f=e.target.files[0];e.target.value='';openLocalModel(f,S.D&&S.D.kind==='asset'?S.D.id:null);}
+  if(e.target.classList&&e.target.classList.contains('vtype')&&V.byType){const ms=V.byType.get(e.target.dataset.t)||[];ms.forEach(m=>m.visible=e.target.checked);}
+  if(e.target.id==='fm-tipe'&&S.D&&S.D.kind==='sensorForm'){const prev=STYPE[S.D.draft.tipe];syncDraft();const nt=STYPE[S.D.draft.tipe];if(!S.D.draft.satuan||(prev&&S.D.draft.satuan===prev.u))S.D.draft.satuan=nt?nt.u:'';renderDrawer();}
+});
+$('#btn-add').addEventListener('click',()=>newAssetForm(null));
+$('#btn-export').addEventListener('click',exportCsv);
+$('#f-cond').innerHTML='<option value="">Semua kondisi</option>'+CONDS.map(c=>'<option value="'+c.k+'">'+c.n+'</option>').join('');
+renderLegend();renderAll();
+function showNotice(t){const n=$('#notice');n.textContent=t;n.hidden=!t;const b=$('#banner');b.textContent=t;b.hidden=!t;}
+if(mapFault)showNotice(mapFault);else if(!world)showNotice('Garis batas negara tidak dapat dimuat. Aset tetap tampil di peta berdasarkan koordinatnya.');
+
+/* ================= Storage & identity ================= */
+function within(p,ms,fallback){return Promise.race([Promise.resolve(p).catch(()=>fallback),new Promise(r=>setTimeout(()=>r(fallback),ms))]);}
+async function resolveRoles(){
+  if(!user){S.admin=true;S.canReport=true;renderAll();return;}
+  S.canReport=true;
+  const [adm,w,me]=await Promise.all([within(user.canEdit(),5000,null),within(user.can('data.write'),5000,null),within(user.id(),5000,null)]);
+  S.admin=adm==null?true:!!adm; S.canReport=w!==false; S.me=me||null;
+  renderAll();
+}
+(async function init(){
+  const c=window.claude,use=n=>c&&c.use?within(c.use(n),12000,null):Promise.resolve(null);
+  const pDb=use('db'),pUser=use('user'),pDl=use('downloads');
+  pDl.then(d=>{downloads=d;renderShell();});
+  use('assets').then(a=>{assetsCap=a;if(S.D&&S.D.kind==='asset')renderDrawer();});
+  pUser.then(u=>{user=u;resolveRoles();});
+  db=await pDb;
+  setTimeout(()=>{if(!S.loaded){showNotice('Data aset belum termuat setelah 20 detik. Muat ulang halaman; jika tetap kosong, beri tahu Claude pesan ini (db: '+(db?'tersedia':'tidak tersedia')+').');}},20000);
+  if(!db){
+    S.local=true;S.loaded=true;S.admin=true;S.canReport=true;
+    if(window.CIS_STANDALONE){if(!loadLocal()&&window.CIS_SEED){Object.keys(COLS).forEach(k=>S[k]=(window.CIS_SEED[k]||[]).map(x=>({...x})));saveLocal();}
+      renderAll();return;}
+    showNotice('Tampilan ini tidak terhubung ke penyimpanan registri, jadi aset tersimpan tidak bisa ditampilkan. Buka halaman dari aplikasi Claude atau claude.ai, bukan tab browser terpisah.');
+    renderAll();return;
+  }
+  const pending=new Set(Object.keys(COLS));
+  Object.entries(COLS).forEach(([k,path])=>{
+    db.collection(path).onSnapshot(snap=>{
+      S[k]=snap.docs.map(d=>({id:d.id,...d.data()}));
+      pending.delete(k);if(!pending.size)S.loaded=true;
+      if(S.sel&&!assetById(S.sel)&&S.loaded){S.sel=null;if(S.D&&S.D.kind==='asset')S.D=null;renderDrawer();}
+      renderAll();
+    },err=>{
+      pending.delete(k);S.loaded=true;
+      showNotice(err&&err.code==='revoked'?'Akses ke registri telah berubah. Muat ulang halaman.':'Sebagian data tidak dapat dimuat. Muat ulang halaman untuk mencoba lagi.');
+      renderAll();
+    });
+  });
+})();
+})();
+</script>
+
+</body></html>
